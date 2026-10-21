@@ -1,4 +1,4 @@
-"""0G Private Computer client: one OpenAI-compatible chat call, with the trust tier made explicit.
+"""0G PC client: one chat call, with the trust tier made explicit.
 
 Settings come from the environment (or a .env file next to where you run the server; never commit it):
 
@@ -46,11 +46,11 @@ class ZeroG:
 
     def info(self) -> dict:
         return {"configured": self.configured, "model": self.model, "trust_mode": self.trust or None,
-                "service": "0G Private Computer", "base_url": self.base}
+                "service": "0G PC", "base_url": self.base}
 
     async def chat(self, messages: list[dict], max_tokens: int = 300) -> dict:
         if not self.configured:
-            raise ZeroGError("Set ZG_API_KEY to ask Floaty through 0G Private Computer (get a key at pc.0g.ai).")
+            raise ZeroGError("Set ZG_API_KEY to ask Floaty through 0G PC (get a key at pc.0g.ai).")
         headers = {"Authorization": f"Bearer {self.key}", "Content-Type": "application/json"}
         if self.trust:
             headers["X-0G-Provider-Trust-Mode"] = self.trust

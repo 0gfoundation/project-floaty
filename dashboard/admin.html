@@ -559,13 +559,13 @@ $("m-recall").onclick = run(async () => {
       <div class="small">${esc(x.text || x.snippet || JSON.stringify(x))}</div></div>`).join("") : `<div class="empty">No matches.</div>`;
 });
 $("m-q").onkeydown = (e) => { if (e.key === "Enter") $("m-recall").click(); };
-/* Ask Floaty: memory recall picks the context, a model on 0G Private Computer writes the answer */
+/* Ask Floaty: memory recall picks the context, a model on 0G PC writes the answer */
 async function loadAskInfo() {
   try {
     const m = await api("GET", "/memory/meta"); const a = m.ask || {};
     $("m-ask-info").innerHTML = a.configured
-      ? `Ask answers through ${badge("0G Private Computer", "pink")} ${esc(a.model)} · ${esc(a.trust_mode || "no trust header")}${a.trust_mode === "private" ? " (Intel TDX enclave)" : ""}`
-      : `Ask is off: set ZG_API_KEY (see .env.example) to answer through 0G Private Computer. Keys at pc.0g.ai.`;
+      ? `Ask answers through ${badge("0G PC", "pink")} ${esc(a.model)} · ${esc(a.trust_mode || "no trust header")}${a.trust_mode === "private" ? " (Intel TDX enclave)" : ""}`
+      : `Ask is off: set ZG_API_KEY (see .env.example) to answer through 0G PC. Keys at pc.0g.ai.`;
   } catch (e) { $("m-ask-info").textContent = ""; }
 }
 loadAskInfo();
