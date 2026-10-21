@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/floaty.png" alt="Floaty, a little robot with heart eyes, floating" width="380">
+<img src="docs/floaty.png" alt="Floaty, a happy little robot, floating" width="380">
 
 # Project Floaty
 
