@@ -75,7 +75,7 @@ def chunk_text(text: str, size: int = 600) -> list[str]:
 
 class MemoryStore:
     def __init__(self, path: Path = DEMO, now: Callable[[], float] | None = None, zg=None) -> None:
-        self.zg = zg  # dashboard.zg.ZeroG, or None: "Ask Floaty" answers from memory through 0G Private Computer
+        self.zg = zg  # dashboard.zg.ZeroG, or None: "Ask Floaty" answers from memory through 0G PC
         self.path = Path(path)
         self._now = now or (lambda: datetime.now(timezone.utc).timestamp())
         raw: dict[str, Any] = json.loads(self.path.read_text(encoding="utf-8"))
@@ -236,7 +236,7 @@ class MemoryStore:
                 return web.json_response({"ok": False, "error": "question required"}, status=400)
             if self.zg is None or not self.zg.configured:
                 return web.json_response({"ok": False, "setup": True, "error": "Set ZG_API_KEY (see .env.example) to "
-                                          "ask Floaty through 0G Private Computer. Get a key at pc.0g.ai."})
+                                          "ask Floaty through 0G PC. Get a key at pc.0g.ai."})
             hits = self.recall(q, 8)
             context = "\n".join(f"- ({h['source']}) {h['text']}" for h in hits) or "- (nothing matched)"
             messages = [

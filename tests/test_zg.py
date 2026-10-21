@@ -1,4 +1,4 @@
-"""Ask Floaty: memory recall plus one chat call to 0G Private Computer (a fake router stands in here)."""
+"""Ask Floaty: memory recall plus one chat call to 0G PC (a fake router stands in here)."""
 import asyncio
 
 from aiohttp import web

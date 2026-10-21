@@ -1,8 +1,7 @@
 # Project Floaty roadmap
 
 Floaty (a working codename) is a palm-sized AI agent with a face, built in public by the 0G DevRel team on
-M5Stack StackChan hardware. Its brain runs on a computer at home; the cloud thinking goes through one
-OpenAI-compatible API on 0G Private Computer, and live voice uses OpenAI realtime.
+M5Stack StackChan hardware. Its brain runs on a computer at home; the cloud thinking runs on 0G PC, and live voice uses OpenAI realtime.
 
 The code opens one piece at a time.
 
@@ -30,7 +29,7 @@ timeline
 
 - [x] Dashboard tab: robot link, usage, approvals waiting, models, errors (demo data)
 - [x] Memory tab: facts, documents and past conversations, with search (demo data)
-- [x] Ask Floaty on the Memory tab: answers from memory on 0G Private Computer, private mode (Intel TDX enclave)
+- [x] Ask Floaty on the Memory tab: answers from memory on 0G PC, private mode (Intel TDX enclave)
 - [x] Sensors tab: live mic, spectrogram, transcripts, motion, proximity, touch, servos, power, events
 - [x] Telemetry protocol (PROTOCOL.md) and a fake robot, so it all runs without hardware
 
@@ -39,7 +38,7 @@ timeline
 - [ ] More dashboard tabs, one at a time: Faces, Tools, Crons (routines), Notifications, Webhooks, Wake, Router, Tables
 - [ ] Wake word as a setting: every builder picks their own, and the community picks Floaty's real name
 - [ ] Tools and agents (below): Floaty as an MCP server, and Hermes Agent and OpenClaw as its background agents
-- [ ] Sealed thinking in the brain: background and routine jobs in 0G Private Computer's private mode, with every
+- [ ] Sealed thinking in the brain: background and routine jobs in 0G PC's private mode, with every
       reply's signature checked at home
 - [ ] Hearing eval: the clip sets and scoring script behind the speech gate and the second wake listener
 - [ ] The brain: the agent service (voice, tools, memory, routines, background tasks, approvals)
@@ -64,7 +63,7 @@ flowchart TB
         direction LR
         B["Brain<br/>voice, memory, approvals"] --> M["Floaty MCP server<br/>speak, express, gesture, look,<br/>show, photo, sensors, remind"] --> R["Robot<br/>face, head, mic, camera"]
     end
-    ZG["0G Private Computer<br/>OpenAI-compatible models"]
+    ZG["0G PC<br/>models in TEE enclaves"]
     AGENTS -- "MCP: talk and act through Floaty's body" --> M
     B -- "run_task: hand off long jobs" --> AGENTS
     B -- "thinking" --> ZG
@@ -78,7 +77,7 @@ flowchart TB
       MCP; progress and results come back as Floaty's voice, and anything that acts still waits for your yes.
 - [ ] **OpenClaw as a background agent:** the same path through OpenClaw's MCP server mode, so its skills
       (messaging, browsing, files) become things you can ask Floaty for out loud.
-- [ ] **One model provider:** each agent can point at 0G Private Computer as its OpenAI-compatible endpoint, so the
+- [ ] **One model provider:** each agent can use 0G PC as its model provider, so the
       whole stack can run on the same key and the same private mode.
 - [ ] **Approvals stay on the robot:** a tool call from any agent that sends, buys or deletes shows on Floaty's face
       and waits for a spoken yes.

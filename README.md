@@ -5,8 +5,8 @@ robot and its brain, what the robot remembers, and everything it senses, live. M
 
 Project Floaty is a palm-sized AI agent with a face, built in public by the 0G DevRel team. It wakes when you
 call it, hands long jobs such as research to a background agent, asks before it acts, remembers what you tell it
-and runs routines on a schedule. Its brain runs on a computer at home; the cloud thinking goes through one
-OpenAI-compatible API on [0G Private Computer](https://pc.0g.ai). "Floaty" is a working codename; the community
+and runs routines on a schedule. Its brain runs on a computer at home; the cloud thinking runs on
+[0G PC](https://pc.0g.ai). "Floaty" is a working codename; the community
 picks the real name.
 
 The code opens one piece at a time: this repo starts with the dashboard and the protocol it speaks. What comes
@@ -51,10 +51,10 @@ embeddings, with the same result shape. Point it at your own file with `--memory
 The live sensor page, also on its own at `/sensors`. It sits in a frame that exists only while the tab is open, so
 leaving the tab lets the robot stop streaming.
 
-## Ask Floaty, on 0G Private Computer
+## Ask Floaty, on 0G PC
 
 The Memory tab has an **Ask Floaty** button: it finds the memories that match your question and has a model on
-[0G Private Computer](https://pc.0g.ai) answer from them, in Floaty's voice. By default it runs 0G's own `0gm-1.0-35b-a3b` (about 2 seconds per answer) in
+[0G PC](https://pc.0g.ai) answer from them, in Floaty's voice. By default it runs 0G's own `0gm-1.0-35b-a3b` (about 2 seconds per answer) in
 **private** mode: the model runs inside an Intel TDX enclave, so neither 0G nor the GPU host sees the prompt, and
 if no enclave is free the router fails closed instead of falling back to a lower tier.
 
@@ -63,7 +63,7 @@ cp .env.example .env      # .env is git-ignored
 # put your key in ZG_API_KEY (from pc.0g.ai, card or crypto top-up), then start the server as below
 ```
 
-It is one OpenAI-compatible call ([`dashboard/zg.py`](dashboard/zg.py)): `POST {ZG_BASE_URL}/chat/completions`
+It is one chat call ([`dashboard/zg.py`](dashboard/zg.py)): `POST {ZG_BASE_URL}/chat/completions`
 with the header `X-0G-Provider-Trust-Mode: private`. `ZG_MODEL` and `ZG_TRUST_MODE` change the model and tier.
 Without a key everything else works and Ask says how to switch it on.
 
