@@ -31,9 +31,3 @@ The code opens one piece at a time. This list is what is open, what comes next, 
 - [ ] A visible mute that stops all listening
 - [ ] More expressions and head moves
 - [ ] A build guide: parts list and setup from zero
-
-## Not planned
-
-- A token. Floaty has none and never will; any coin using its name is a scam.
-
-Ideas and requests: open an issue.
