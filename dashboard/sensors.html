@@ -363,7 +363,7 @@ function onHeard(m) {
     $("partial").className = "partial idle"; $("partial").textContent = "Waiting for speech";
     if (m.drop || (!m.text && !m.error)) return;
   }
-  const chips = { stt: ["c-stt", "local"], realtime: ["c-realtime", "realtime"], assistant: ["c-assistant", "robot"], listen: ["c-listen", "listener"] };
+  const chips = { stt: ["c-stt", "local"], realtime: ["c-realtime", "conversation"], assistant: ["c-assistant", "robot"], listen: ["c-listen", "listener"] };
   const [cls, name] = chips[m.source] || ["c-event", m.source];
   const meta = [];
   if (m.src) meta.push(m.src === "session" ? "in conversation" : "idle mic");

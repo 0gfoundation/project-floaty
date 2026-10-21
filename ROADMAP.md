@@ -1,7 +1,7 @@
 # Project Floaty roadmap
 
 Floaty (a working codename) is a palm-sized AI agent with a face, built in public by the 0G DevRel team on
-M5Stack StackChan hardware. Its brain runs on a computer at home; the cloud thinking runs on 0G PC, and live voice uses OpenAI realtime.
+M5Stack StackChan hardware. Its brain runs on a computer at home; the cloud thinking runs on 0G PC.
 
 The code opens one piece at a time.
 

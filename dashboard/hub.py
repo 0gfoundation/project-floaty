@@ -203,7 +203,7 @@ class SensorHub:
         self._audio(pcm, "session")
 
     def note(self, kind: str, text: str, **extra) -> None:
-        """A line of what was heard or said, e.g. realtime (user transcript), assistant, listen (idle segment)."""
+        """A line of what was heard or said, e.g. conversation (user transcript), assistant, listen (idle segment)."""
         if self.viewers:
             self._publish({"t": "heard", "source": kind, "final": True, "text": text, **extra})
 
