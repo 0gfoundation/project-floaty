@@ -98,7 +98,7 @@ docs/DEVELOPING.md  adding a tab, connecting a real robot, design notes, tests
 
 ## In real life
 
-<p align="center"><img src="docs/floaty.jpg" alt="The real Floaty on a desk, heart eyes on its screen, the 0G logo glowing beside it" width="420"></p>
+<p align="center"><img src="docs/floaty.jpg" alt="The real Floaty on a desk with heart eyes, the Project Floaty e-ink card behind it and the 0G logo glowing beside it" width="460"></p>
 
 ## Credits and license
 
