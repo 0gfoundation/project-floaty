@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/floaty.jpg" alt="Floaty on a desk, heart eyes on its screen, the 0G logo glowing beside it" width="420">
+<img src="docs/floaty.png" alt="Floaty, a little robot with heart eyes, floating" width="360">
 
 # Project Floaty
 
@@ -9,7 +9,7 @@ It hears you, thinks on [0G PC](https://pc.0g.ai), and shows how it feels.
 
 Built in public by the 0G DevRel team · "Floaty" is a codename until the community names it
 
-[Quick start](#quick-start) · [What's inside](#whats-inside) · [Ask Floaty](#ask-floaty-on-0g-pc) · [Roadmap](ROADMAP.md)
+[Play with its faces](https://0gfoundation.github.io/project-floaty/) · [Quick start](#quick-start) · [What's inside](#whats-inside) · [Ask Floaty](#ask-floaty-on-0g-pc) · [Roadmap](ROADMAP.md)
 
 </div>
 
@@ -20,7 +20,7 @@ research, and tells you what it found. It remembers what you tell it, runs your 
 answers questions about what its camera sees. Its brain runs on a computer at home, and the heavy thinking happens
 on [0G PC](https://pc.0g.ai).
 
-It also has 16 faces and 7 head moves, so you always know what it is up to:
+It also has 16 faces and 7 head moves, so you always know what it is up to. **[Play them in your browser](https://0gfoundation.github.io/project-floaty/)**, with the real head moves:
 
 <p align="center"><img src="docs/faces.png" alt="Floaty's 16 faces: happy, excited, laughing, love, surprised, thinking, confused, listening, speaking, idle, sad, sleepy, sleeping, angry, error, silent" width="640"></p>
 
@@ -92,8 +92,13 @@ data/               demo data for the Dashboard and Memory tabs
 tools/fake_robot.py the simulated bot
 PROTOCOL.md         how the robot streams sensors and sound
 ROADMAP.md          what opens next
+tools/build_site.py builds the faces site (GitHub Pages)
 docs/DEVELOPING.md  adding a tab, connecting a real robot, design notes, tests
 ```
+
+## In real life
+
+<p align="center"><img src="docs/floaty.jpg" alt="The real Floaty on a desk, heart eyes on its screen, the 0G logo glowing beside it" width="420"></p>
 
 ## Credits and license
 
