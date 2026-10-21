@@ -1,0 +1,56 @@
+{
+  "label": "demo data",
+  "about": "Made-up numbers for a demo robot, with made-up model names, so the Dashboard tab has something to show. When a robot or tools/fake_robot.py is connected, the Robot card shows that live link.",
+  "overview": {
+    "uptime_s": 15840,
+    "llm": {
+      "providers": {
+        "voice": {"configured": true, "model": "demo-voice-mini", "healthy": true, "consecutive_failures": 0, "circuit_open_s": 0,
+                  "last_error": null, "last_ok_ago_s": 42, "last_latency_s": 0.62, "calls": 318, "host_open_s": 0},
+        "chat": {"configured": true, "model": "demo-chat-large", "healthy": true, "consecutive_failures": 0, "circuit_open_s": 0,
+                 "last_error": null, "last_ok_ago_s": 95, "last_latency_s": 1.84, "calls": 57, "host_open_s": 0},
+        "local": {"configured": true, "model": "demo-local-small", "healthy": false, "consecutive_failures": 3, "circuit_open_s": 48,
+                  "last_error": "demo: connection refused (the sample local model is switched off)", "last_ok_ago_s": 7200, "last_latency_s": 0.41,
+                  "calls": 12, "host_open_s": 48},
+        "vision": {"configured": false, "model": "demo-vision", "healthy": false, "consecutive_failures": 0, "circuit_open_s": 0,
+                   "last_error": null, "last_ok_ago_s": null, "last_latency_s": null, "calls": 0, "host_open_s": 0}
+      },
+      "chains": {"agent": ["chat", "local"], "router": ["local", "chat"], "vision": ["vision"]},
+      "embed_model": "demo-embed-small"
+    },
+    "robot": {
+      "seen_s_ago": 2.4,
+      "devices": {"demo-robot-01": {"app_version": "0.0.0-demo", "last_ota_ago_s": 5400, "board": "demo-board"}},
+      "conversations": []
+    },
+    "tracker": {
+      "enabled": true, "mode": "face", "follow": true, "frames": 18234, "faces": 9120, "pose": [4, 2], "home": [0.0, 0.0],
+      "face_seen_s_ago": 12.5, "box": [62, 30, 44, 44], "in_conversation": false,
+      "moves": [
+        {"t": "10:41:07", "to": [6, 3], "why": "face drifted right"},
+        {"t": "10:41:31", "to": [4, 2], "why": "settle on face"}
+      ]
+    },
+    "notify": {"card": {"id": 7, "count": 1, "title": "Water the fern (demo)"}, "wake": null, "sleep": false, "force_sleep": null, "busy": false},
+    "tools": 24,
+    "pending_embeddings": 0,
+    "errors": [
+      {"ts_ago_s": 3600, "where": "local model", "error": "demo: connection refused (sample error)"}
+    ]
+  },
+  "pending": [
+    {"id": "demo-pending-1", "tool": "send_message", "source": "voice", "ts_ago_s": 180,
+     "args": {"to": "Riley Sample", "text": "Running ten minutes late, save me a slice of lemon tart!"}}
+  ],
+  "usage": {
+    "today": {"date": "", "usd": 0.1842, "models": {
+      "demo-voice-mini": {"calls": 318, "usd": 0.1211, "price_estimate": true},
+      "demo-chat-large": {"calls": 57, "usd": 0.0583, "price_estimate": true},
+      "demo-embed-small": {"calls": 41, "usd": 0.0048, "price_estimate": true}
+    }},
+    "last_7_days": {"usd": 1.2675, "by_day": {}},
+    "total": {"since": "2026-09-01", "usd": 9.8312, "models": {}},
+    "prices_usd_per_1m_tokens": {},
+    "note": "Demo numbers, not real spend."
+  }
+}

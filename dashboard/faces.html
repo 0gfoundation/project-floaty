@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robot Faces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a preview stage (drawn head + move readout) on top, then the expression gallery and the gestures.
+   Same instrument palette as the Senses page. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0f12; --panel: #12181d; --panel2: #171f25; --line: #24303a; --dim: #6c7d89; --fg: #d9e3ea; --strong: #f2f7fa;
+  --amber: #f5b841; --teal: #45c9b8; --red: #ef6a5a; --blue: #6aa7f5; --violet: #b18cf2; --green: #7bd88f;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); }
+.wrap { max-width: 1400px; margin: 0 auto; padding-block: 16px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+h1 { font: 600 18px var(--mono); letter-spacing: .04em; margin: 0; color: var(--strong); }
+h1 small { color: var(--dim); font-weight: 400; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.pill { font: 12px var(--mono); padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--dim); white-space: nowrap; }
+.pill b { font-weight: 500; color: var(--fg); }
+button { font: 500 13px var(--mono); background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button.on { background: color-mix(in srgb, var(--amber) 18%, var(--panel2)); border-color: var(--amber); color: var(--amber); }
+button:focus-visible, .card:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.card h2 { margin: 0; font: 600 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; gap: 8px; }
+.card h2 span { letter-spacing: 0; text-transform: none; font-weight: 400; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* stage */
+.stage { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+.scene { position: relative; height: 340px; background: radial-gradient(ellipse at 50% 85%, #172128 0%, #0b0f12 70%); border-radius: 8px;
+         perspective: 900px; perspective-origin: 50% 40%; overflow: hidden; }
+.robot { position: absolute; left: 50%; bottom: 34px; width: 220px; margin-left: -110px; display: grid; justify-items: center; }
+.head { width: 220px; height: 176px; transform-style: preserve-3d; transform-origin: 50% 100%; transition-property: transform;
+        transition-timing-function: cubic-bezier(.45, .05, .35, 1); position: relative; z-index: 2; }
+.shell { position: absolute; inset: 0; border-radius: 26px; background: linear-gradient(160deg, #f1f3f4, #c9ced2 70%, #aab1b6);
+         box-shadow: inset 0 -6px 0 rgba(0,0,0,.12), 0 14px 30px rgba(0,0,0,.45); }
+.screen { position: absolute; inset: 18px 18px 22px; border-radius: 10px; background: #000; overflow: hidden; display: grid; place-items: center; }
+.screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.screen .eyes { display: flex; gap: 46px; }
+.screen .eyes i { width: 34px; height: 44px; border-radius: 50%; background: #fff; }
+.neck { width: 70px; height: 14px; background: #8b9398; border-radius: 0 0 6px 6px; margin-top: -2px; }
+.body { width: 190px; height: 64px; border-radius: 16px 16px 12px 12px; background: linear-gradient(180deg, #d8dcdf, #a7aeb3); box-shadow: inset 0 -5px 0 rgba(0,0,0,.12); }
+.floor { position: absolute; left: 50%; bottom: 22px; width: 280px; height: 26px; margin-left: -140px; border-radius: 50%; background: rgba(0,0,0,.55); filter: blur(8px); }
+.readout { position: absolute; left: 10px; top: 10px; font: 12px var(--mono); color: var(--dim); display: grid; gap: 2px; }
+.readout b { color: var(--strong); font-weight: 500; display: inline-block; min-width: 4.5ch; text-align: right; }
+.name { font: 600 22px var(--mono); color: var(--strong); text-transform: capitalize; margin: 0; }
+.desc { margin: 0; color: var(--fg); }
+.moods { display: flex; flex-wrap: wrap; gap: 5px; }
+.mood { font: 500 11px var(--mono); padding: 2px 7px; border-radius: 4px; background: color-mix(in srgb, var(--violet) 18%, transparent); color: var(--violet); }
+.mood.none { background: var(--panel2); color: var(--dim); }
+.moves { width: 100%; border-collapse: collapse; font: 12px var(--mono); }
+.moves th { text-align: right; color: var(--dim); font-weight: 400; padding: 3px 6px; border-bottom: 1px solid var(--line); }
+.moves td { text-align: right; padding: 3px 6px; color: var(--fg); font-variant-numeric: tabular-nums; }
+.moves th:first-child, .moves td:first-child { text-align: left; }
+.moves tr.now td { color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
+#path { width: 100%; height: auto; max-height: 200px; display: block; background: #070a0c; border-radius: 6px; }
+.hint { font-size: 12px; color: var(--dim); }
+
+/* gallery */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 14px; }
+.face { cursor: pointer; padding: 10px; gap: 8px; }
+.face:hover { border-color: var(--dim); }
+.face.sel { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset; }
+.face img, .face .noimg { width: 100%; aspect-ratio: 4 / 3; border-radius: 6px; background: #000; display: block; object-fit: cover; }
+.face .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.face .n { font: 600 14px var(--mono); color: var(--strong); text-transform: capitalize; }
+.face .m { font: 11px var(--mono); color: var(--dim); white-space: nowrap; }
+.face p { margin: 0; font-size: 12.5px; color: var(--fg); }
+.gestures { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+.gesture { cursor: pointer; text-align: left; display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--panel2); }
+.gesture.sel { border-color: var(--teal); color: var(--teal); }
+.gesture .n { font: 600 13px var(--mono); }
+.gesture .d { font: 12px var(--sans); color: var(--fg); }
+.gesture .m { font: 11px var(--mono); color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>FACES <small>expressions and head moves</small></h1>
+    <div class="pills">
+      <span class="pill">expressions <b id="n-expr">0</b></span>
+      <span class="pill">gestures <b id="n-gest">0</b></span>
+      <span class="pill">mood words <b id="n-mood">0</b></span>
+      <span class="pill">robot <b>not needed</b></span>
+    </div>
+    <div class="controls">
+      <button id="b-play" title="Play the selected moves again">&#9654; Play</button>
+      <button id="b-loop" title="Repeat the moves">Loop</button>
+      <button id="b-tour" title="Play every expression in turn">Play all</button>
+    </div>
+  </header>
+
+  <section class="stage">
+    <div class="card">
+      <h2>Preview <span id="st-kind">expression</span></h2>
+      <div class="scene" id="scene">
+        <div class="readout">
+          <span>yaw <b id="r-yaw">0</b>&deg;</span>
+          <span>pitch <b id="r-pitch">0</b>&deg;</span>
+          <span>speed <b id="r-speed">·</b></span>
+          <span>step <b id="r-step">·</b></span>
+        </div>
+        <div class="floor"></div>
+        <div class="robot">
+          <div class="head" id="head"><div class="shell"></div><div class="screen" id="screen"></div></div>
+          <div class="neck"></div>
+          <div class="body"></div>
+        </div>
+      </div>
+      <div class="hint">A drawn head plays the real moves: yaw and pitch in degrees, servo speed (60 slow to 1000 snappy) sets how fast it gets there, and each step lasts its hold time.</div>
+    </div>
+    <div class="card">
+      <h2>Selected <span id="st-dur"></span></h2>
+      <p class="name" id="st-name">idle</p>
+      <p class="desc" id="st-desc"></p>
+      <div><div class="hint" style="margin-bottom:4px">Mood words that pick this face</div><div class="moods" id="st-moods"></div></div>
+      <svg id="path" viewBox="-45 -18 90 36" aria-label="Head path: yaw across, pitch up"></svg>
+      <table class="moves"><thead><tr><th>step</th><th>yaw</th><th>pitch</th><th>speed</th><th>hold ms</th></tr></thead><tbody id="st-moves"></tbody></table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Expressions <span>click one to preview it</span></h2>
+    <div class="grid" id="faces"></div>
+  </section>
+
+  <section class="card">
+    <h2>Gestures <span>head moves a model can ask for on their own; they play with the selected face</span></h2>
+    <div class="gestures" id="gestures"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const sign = (v) => (v > 0 ? "+" : "") + v;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DEG_PER_S_PER_SPEED = 0.6; // speed 60 moves about 36 deg/s, speed 1000 about 600 deg/s
+
+let data = null, face = null, current = null, kind = "expression", loop = false, tour = false;
+let pose = { yaw: 0, pitch: 0 }, timer = null, run = 0;
+
+function setFace(e) {
+  face = e;
+  $("screen").innerHTML = e.image ? `<img src="${esc(e.image)}" alt="${esc(e.name)} face">` : '<div class="eyes"><i></i><i></i></div>';
+  for (const c of document.querySelectorAll(".face")) c.classList.toggle("sel", c.dataset.name === e.name);
+}
+
+function select(item, isGesture) {
+  current = item; kind = isGesture ? "gesture" : "expression";
+  if (!isGesture) setFace(item);
+  for (const g of document.querySelectorAll(".gesture")) g.classList.toggle("sel", isGesture && g.dataset.name === item.name);
+  $("st-kind").textContent = isGesture ? `gesture, with the ${face.name} face` : "expression";
+  $("st-name").textContent = item.name.replace("_", " ");
+  $("st-desc").textContent = item.description;
+  const moods = isGesture ? [] : item.moods;
+  $("st-moods").innerHTML = isGesture
+    ? `<span class="mood none">${item.same_as ? "same moves as " + esc(item.same_as) : "gesture tool only"}</span>`
+    : (moods.length ? moods.map((m) => `<span class="mood">${esc(m)}</span>`).join("") : '<span class="mood none">none: set by the robot itself</span>');
+  $("st-dur").textContent = `${item.moves.length} step${item.moves.length > 1 ? "s" : ""}, ${(item.duration_ms / 1000).toFixed(1)} s`;
+  $("st-moves").innerHTML = item.moves.map((m, i) =>
+    `<tr id="mv-${i}"><td>${i + 1}</td><td>${sign(m[0])}</td><td>${sign(m[1])}</td><td>${m[2]}</td><td>${m[3]}</td></tr>`).join("");
+  drawPath(item.moves);
+  play();
+}
+
+function drawPath(moves) {
+  const pts = [[0, 0], ...moves.map((m) => [m[0], -m[1]])];
+  let s = "";
+  for (let x = -40; x <= 40; x += 10) s += `<line x1="${x}" y1="-16" x2="${x}" y2="16" stroke="#24303a" stroke-width="${x === 0 ? .4 : .2}"/>`;
+  for (let y = -15; y <= 15; y += 5) s += `<line x1="-42" y1="${y}" x2="42" y2="${y}" stroke="#24303a" stroke-width="${y === 0 ? .4 : .2}"/>`;
+  s += `<polyline points="${pts.map((p) => p.join(",")).join(" ")}" fill="none" stroke="#45c9b8" stroke-width=".6" stroke-linejoin="round" opacity=".8"/>`;
+  s += moves.map((m, i) => `<circle cx="${m[0]}" cy="${-m[1]}" r="1" fill="#45c9b8"/>`).join("");
+  s += `<circle id="dot" cx="0" cy="0" r="1.8" fill="#f5b841"/>`;
+  s += `<text x="-43" y="-12.5" font-size="2.2" fill="#6c7d89" font-family="IBM Plex Mono, monospace">up</text>`;
+  s += `<text x="36" y="16" font-size="2.2" fill="#6c7d89" font-family="IBM Plex Mono, monospace">right</text>`;
+  $("path").innerHTML = s;
+}
+
+function moveTo(yaw, pitch, ms) {
+  const head = $("head");
+  head.style.transitionDuration = reduced ? "0ms" : `${Math.round(ms)}ms`;
+  head.style.transform = `rotateY(${yaw}deg) rotateX(${pitch}deg)`;
+  const dot = $("dot");
+  if (dot) { dot.setAttribute("cx", yaw); dot.setAttribute("cy", -pitch); }
+  $("r-yaw").textContent = sign(yaw); $("r-pitch").textContent = sign(pitch);
+  pose = { yaw, pitch };
+}
+
+function play() {
+  clearTimeout(timer);
+  const id = ++run, moves = current.moves;
+  let i = 0;
+  const step = () => {
+    if (id !== run) return;
+    document.querySelectorAll("#st-moves tr").forEach((r) => r.classList.remove("now"));
+    if (i >= moves.length) {
+      $("r-step").textContent = "done";
+      if (tour) { timer = setTimeout(nextInTour, 700); return; }
+      if (loop) { i = 0; timer = setTimeout(step, 400); return; }
+      // settle back to centre so the next play starts level
+      timer = setTimeout(() => { if (id === run) moveTo(0, 0, 400); }, 600);
+      return;
+    }
+    const [yaw, pitch, speed, hold] = moves[i];
+    const dist = Math.max(Math.abs(yaw - pose.yaw), Math.abs(pitch - pose.pitch));
+    const travel = Math.min(hold, (dist / (speed * DEG_PER_S_PER_SPEED)) * 1000);
+    moveTo(yaw, pitch, travel);
+    $("r-speed").textContent = speed;
+    $("r-step").textContent = `${i + 1}/${moves.length}`;
+    $("mv-" + i)?.classList.add("now");
+    i += 1;
+    timer = setTimeout(step, hold);
+  };
+  step();
+}
+
+function nextInTour() {
+  const list = data.expressions, at = list.findIndex((e) => e.name === face.name);
+  if (kind !== "expression" || at === list.length - 1) { tour = false; $("b-tour").classList.remove("on"); return; }
+  select(list[at + 1], false);
+  document.querySelector(`.face[data-name="${list[at + 1].name}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+async function load() {
+  data = await (await fetch("/api/faces")).json();
+  $("n-expr").textContent = data.expressions.length;
+  $("n-gest").textContent = data.gestures.length;
+  $("n-mood").textContent = Object.keys(data.moods).length;
+  $("faces").innerHTML = data.expressions.map((e) => `
+    <article class="card face" tabindex="0" data-name="${esc(e.name)}">
+      ${e.image ? `<img src="${esc(e.image)}" alt="${esc(e.name)} face" loading="lazy">` : '<div class="noimg"></div>'}
+      <div class="top"><span class="n">${esc(e.name)}</span><span class="m">${e.moves.length} moves, ${(e.duration_ms / 1000).toFixed(1)} s</span></div>
+      <p>${esc(e.description)}</p>
+      <div class="moods">${e.moods.length ? e.moods.map((m) => `<span class="mood">${esc(m)}</span>`).join("") : '<span class="mood none">no mood word</span>'}</div>
+    </article>`).join("");
+  $("gestures").innerHTML = data.gestures.map((g) => `
+    <button class="gesture" data-name="${esc(g.name)}">
+      <span class="n">${esc(g.name.replace("_", " "))}</span>
+      <span class="d">${esc(g.description)}</span>
+      <span class="m">${g.moves.length} moves, ${(g.duration_ms / 1000).toFixed(1)} s${g.same_as ? ", as " + esc(g.same_as) : ""}</span>
+    </button>`).join("");
+  const byName = (list, n) => list.find((x) => x.name === n);
+  for (const c of document.querySelectorAll(".face")) {
+    const pick = () => { tour = false; $("b-tour").classList.remove("on"); select(byName(data.expressions, c.dataset.name), false); };
+    c.onclick = pick;
+    c.onkeydown = (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick(); } };
+  }
+  for (const g of document.querySelectorAll(".gesture")) {
+    g.onclick = () => { tour = false; $("b-tour").classList.remove("on"); select(byName(data.gestures, g.dataset.name), true); };
+  }
+  const start = byName(data.expressions, new URLSearchParams(location.search).get("face")) || data.expressions[0];
+  select(start, false);
+}
+
+$("b-play").onclick = () => current && play();
+$("b-loop").onclick = () => { loop = !loop; $("b-loop").classList.toggle("on", loop); if (loop && current) play(); };
+$("b-tour").onclick = () => {
+  tour = !tour; $("b-tour").classList.toggle("on", tour);
+  if (tour) select(data.expressions[0], false);
+};
+load().catch(() => { $("faces").innerHTML = '<div class="hint">Could not load /api/faces.</div>'; });
+</script>
+</body>
+</html>

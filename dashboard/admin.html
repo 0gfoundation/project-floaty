@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Floaty Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600&display=swap">
+<style>
+  /* Layout: one dark board like the face review page; a scrolling tab strip, then cards per tab. */
+  :root {
+    color-scheme: dark;
+    --ink: #0d0b12;
+    --panel: #17141f;
+    --panel2: #1e1a28;
+    --line: #2a2533;
+    --fg: #f3eef6;
+    --muted: #a69cb2;
+    --pink: #ff8fb1;
+    --ok: #7be0a9;
+    --warn: #ffd34d;
+    --bad: #ff6b6b;
+    --display: "Fredoka", "Avenir Next Rounded", system-ui, sans-serif;
+    --body: "Nunito Sans", system-ui, -apple-system, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--ink); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-block: 22px 64px;
+          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+          display: grid; gap: 18px; min-width: 0; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+  h1 { margin: 0; font-family: var(--display); font-weight: 600; font-size: clamp(26px, 5vw, 38px); }
+  h1 span { color: var(--pink); }
+  h2 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 19px; }
+  h3 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 16px; color: var(--muted); }
+  .status { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+  .dot.on { background: var(--ok); } .dot.off { background: var(--warn); } .dot.bad { background: var(--bad); }
+  nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); padding-bottom: 8px;
+        position: sticky; top: 0; background: var(--ink); z-index: 5; padding-top: 6px; }
+  nav::-webkit-scrollbar { display: none; }
+  nav button { background: transparent; color: var(--muted); border: 1px solid transparent; white-space: nowrap; }
+  nav button.on { color: var(--fg); border-color: var(--line); background: var(--panel); }
+  section { display: none; gap: 16px; min-width: 0; }
+  section.on { display: grid; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px;
+          align-content: start; min-width: 0; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .muted { color: var(--muted); } .small { font-size: 13px; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; font-size: 14px; margin: 0; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; overflow-wrap: anywhere; }
+  .big { font-family: var(--display); font-size: 30px; font-weight: 600; }
+  button { font: 600 14px var(--body); color: #1a0d14; background: var(--pink); border: 0; border-radius: 10px; padding: 8px 13px; cursor: pointer; }
+  button:hover { filter: brightness(1.08); }
+  button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  button.danger { background: transparent; color: var(--bad); border: 1px solid #4a2a33; }
+  button.sm { padding: 4px 9px; font-size: 13px; border-radius: 8px; }
+  button:disabled { opacity: .5; cursor: default; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  input, textarea, select { width: 100%; background: var(--ink); color: var(--fg); border: 1px solid var(--line); border-radius: 10px;
+                            padding: 8px 10px; font: 14px var(--body); min-width: 0; }
+  textarea { min-height: 80px; resize: vertical; }
+  textarea.code, input.code { font: 13px var(--mono); }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row > input, .row > select { flex: 1 1 140px; width: auto; }
+  .form { display: grid; gap: 8px; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; }
+  .scroll { overflow-x: auto; max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  td { overflow-wrap: anywhere; }
+  td.nowrap { white-space: nowrap; overflow-wrap: normal; }
+  pre { margin: 0; font: 12px/1.45 var(--mono); background: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+        padding: 8px 10px; overflow: auto; max-height: 360px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--line);
+           color: var(--muted); white-space: nowrap; }
+  .badge.read, .badge.ok { color: var(--ok); border-color: #2c4a3a; }
+  .badge.act, .badge.warn { color: var(--warn); border-color: #4a4428; }
+  .badge.confirm, .badge.bad { color: var(--bad); border-color: #4a2a33; }
+  .badge.pink { color: var(--pink); border-color: #4a2a3a; }
+  .list { display: grid; gap: 8px; }
+  .item { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; min-width: 0; }
+  .item.click { cursor: pointer; } .item.click:hover { border-color: var(--pink); }
+  .empty { color: var(--muted); font-size: 14px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  img.frame { width: 100%; max-width: 320px; aspect-ratio: 4 / 3; border-radius: 8px; background: #000; display: block; }
+  .turn { padding: 6px 10px; border-radius: 10px; background: var(--panel2); font-size: 14px; }
+  .turn.user { border-left: 3px solid var(--pink); } .turn.assistant { border-left: 3px solid var(--ok); }
+  #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line);
+           padding: 8px 14px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); }
+  .item.sel { border-color: var(--pink); box-shadow: 0 0 0 1px var(--pink) inset; }
+  kbd { font: 600 11px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; color: var(--fg); background: var(--panel2); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.hot { color: var(--ok); } td.miss { color: var(--warn); }
+  nav button:disabled { opacity: 1; color: color-mix(in srgb, var(--muted) 60%, transparent); cursor: default; filter: none; }
+  nav .later { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-left: 6px; padding: 0 5px;
+               border: 1px dashed var(--line); border-radius: 5px; vertical-align: 1px; }
+  .demo { font-size: 14px; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--warn) 8%, var(--panel));
+          border: 1px solid #4a4428; }
+  .demo b { color: var(--warn); font-size: 11px; letter-spacing: .1em; margin-right: 8px; }
+  iframe.tabframe { width: 100%; border: 0; border-radius: 16px; background: var(--ink); display: block; min-height: 70vh; }
+  #toast.show { opacity: 1; } #toast.err { border-color: var(--bad); color: var(--bad); }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Floaty <span>Admin</span></h1>
+    <div class="status"><span class="dot" id="dot"></span><span id="statustext">Connecting...</span>
+      <button class="ghost sm" id="refresh" title="Reload this tab">Refresh</button></div>
+  </header>
+  <!-- Filled from GET /api/tabs (dashboard/config.py): live tabs are buttons, the rest disabled "later" chips -->
+  <nav id="tabs" aria-label="Tabs"></nav>
+
+  <section id="overview">
+    <div class="demo" id="ov-demo" hidden><b>DEMO DATA</b><span id="ov-demo-text"></span></div>
+    <div class="grid">
+      <div class="card"><h2>Robot</h2><dl class="kv" id="ov-robot"></dl></div>
+      <div class="card"><div class="top"><h2>Usage today</h2><span class="big" id="ov-usd"></span></div>
+        <div class="scroll"><table id="ov-usage"></table></div><div class="small muted" id="ov-usage-more"></div></div>
+      <div class="card"><div class="top"><h2>Tracker</h2>
+        <button class="ghost sm" id="ov-follow">Toggle follow</button></div>
+        <dl class="kv" id="ov-track"></dl>
+        <img class="frame" id="ov-frame" alt="Last camera frame from the robot">
+      </div>
+      <div class="card"><h2>Waiting for a yes</h2><div class="list" id="ov-pending"></div></div>
+    </div>
+    <div class="card"><h2>Models</h2><div class="scroll"><table id="ov-llm"></table></div><div class="small muted" id="ov-chains"></div></div>
+    <div class="card" id="ov-errors-card" hidden><h2>Recent errors</h2><pre id="ov-errors"></pre></div>
+  </section>
+
+  <section id="tools">
+    <div class="card">
+      <div class="top"><h2>Test-run a tool</h2><span class="small muted">runs as source "admin", audited</span></div>
+      <div class="form">
+        <select id="t-name"></select>
+        <div class="small muted" id="t-desc"></div>
+        <textarea class="code" id="t-args" spellcheck="false">{}</textarea>
+        <div class="row"><button id="t-run">Run</button><span class="small muted" id="t-ms"></span></div>
+        <pre id="t-out" hidden></pre>
+        <div class="row" id="t-confirm" hidden><span class="small">Held for confirmation.</span>
+          <button class="sm" id="t-yes">Approve</button><button class="ghost sm" id="t-no">Cancel</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="top"><h2>Tools <span class="muted small" id="t-count"></span></h2><button class="ghost sm" id="t-reload">Reload tools dir</button></div>
+      <div class="small muted" id="t-dir"></div>
+      <pre id="t-errors" hidden></pre>
+      <div class="scroll"><table id="t-list"></table></div>
+    </div>
+    <div class="card">
+      <div class="top"><h2>Audit</h2><button class="ghost sm" id="t-audit-more">Show 200</button></div>
+      <div class="scroll"><table id="t-audit"></table></div>
+    </div>
+  </section>
+
+  <section id="memory">
+    <div class="demo" id="m-demo" hidden><b>DEMO DATA</b><span id="m-demo-text"></span></div>
+    <div class="card">
+      <h2>Recall</h2>
+      <div class="row"><input id="m-q" placeholder="Search facts, documents, past talks, or ask Floaty a question"><button id="m-recall">Search</button><button id="m-ask">Ask Floaty</button></div>
+      <div class="small muted" id="m-ask-info"></div>
+      <div class="list" id="m-answer"></div>
+      <div class="list" id="m-results"></div>
+    </div>
+    <div class="card">
+      <div class="top"><h2>Facts <span class="muted small" id="m-fcount"></span></h2>
+        <label class="row" style="display:flex"><input type="checkbox" id="m-all" style="width:auto"> include expired</label></div>
+      <div class="scroll"><table id="m-facts"></table></div>
+    </div>
+    <div class="card">
+      <h2>Documents</h2>
+      <div class="scroll"><table id="d-list"></table></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>Episodes</h2><div class="list" id="e-list"></div></div>
+      <div class="card"><h2 id="e-title">Transcript</h2><div class="list" id="e-view"><div class="empty">Pick an episode.</div></div></div>
+    </div>
+  </section>
+
+  <!-- Pages that live on their own URL, shown in a frame only while their tab is open -->
+  <section id="sensors"><div id="sensors-host"></div></section>
+  <section id="faces"><div id="faces-host"></div></section>
+
+  <section id="tables">
+    <div class="card"><h2>Tables</h2><div class="list" id="db-list"></div></div>
+    <div class="card"><div class="top"><h2 id="db-title">Rows</h2><span class="small muted" id="db-meta"></span></div>
+      <div class="scroll"><table id="db-rows"></table></div></div>
+    <div class="card">
+      <h2>Read-only SQL</h2>
+      <textarea class="code" id="db-sql" spellcheck="false" placeholder="SELECT * FROM expenses ORDER BY id DESC LIMIT 20"></textarea>
+      <div class="row"><button id="db-run">Run</button><span class="small muted">Only SELECT over user tables. Or ask in words:</span></div>
+      <div class="row"><input id="db-q" placeholder="How much did I spend on tea this week?"><button class="ghost" id="db-ask">Ask</button></div>
+      <div class="small muted" id="db-answer"></div>
+      <div class="scroll"><table id="db-out"></table></div>
+    </div>
+  </section>
+
+  <section id="crons">
+    <div class="card"><h2>Routines</h2><div class="list" id="c-list"></div></div>
+    <div class="card">
+      <h2>Add a routine</h2>
+      <div class="form">
+        <div class="two"><input id="c-name" placeholder="name"><input class="code" id="c-sched" placeholder="cron, e.g. 0 7 * * *"></div>
+        <textarea id="c-goal" placeholder="Goal for the agent, e.g. Give a short good-morning summary with the weather"></textarea>
+        <div class="two">
+          <label>output<select id="c-out"><option>notify</option><option>speak</option><option>silent</option></select></label>
+          <label>priority<select id="c-pri"><option>normal</option><option>urgent</option></select></label>
+          <label>enabled<select id="c-en"><option value="1">yes</option><option value="0">no</option></select></label>
+        </div>
+        <div class="small muted">Schedule is local time (minute hour day month weekday).</div>
+        <div class="row"><button id="c-add">Add routine</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="notify">
+    <div class="grid">
+      <div class="card"><h2>Bell</h2><dl class="kv" id="n-state"></dl>
+        <h3>Sleep override</h3>
+        <div class="row"><button class="ghost sm" data-sleep="auto">Schedule</button><button class="ghost sm" data-sleep="on">Force sleep</button>
+          <button class="ghost sm" data-sleep="off">Force awake</button></div></div>
+      <div class="card"><h2>Send a test</h2>
+        <div class="form"><input id="n-title" placeholder="Title (40 chars show on the robot)" maxlength="80">
+          <textarea id="n-text" placeholder="Text the robot reads out"></textarea>
+          <div class="two"><label>priority<select id="n-pri"><option>normal</option><option>urgent</option><option>low</option></select></label>
+            <label>in minutes<input id="n-in" type="number" min="0" step="1" value="0"></label></div>
+          <div class="row"><button id="n-send">Send</button></div></div></div>
+    </div>
+    <div class="card"><h2>Queue</h2><div class="list" id="n-queue"></div></div>
+    <div class="card"><h2>History</h2><div class="scroll"><table id="n-hist"></table></div></div>
+  </section>
+
+  <section id="hooks">
+    <div class="card"><h2>Hooks</h2><div class="small muted" id="h-config"></div><div class="list" id="h-list"></div></div>
+    <div class="card"><div class="top"><h2>Log</h2><select id="h-filter" style="width:auto"><option value="">all hooks</option></select></div>
+      <div class="scroll"><table id="h-log"></table></div></div>
+  </section>
+
+  <section id="wake">
+    <div class="grid">
+      <div class="card"><h2>Wake check</h2><dl class="kv" id="w-state"></dl></div>
+      <div class="card"><h2>Per hour (48 h)</h2><div class="scroll"><table id="w-hours"></table></div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="top"><h2>Enrollment</h2>
+          <div class="row"><button class="sm" id="w-enroll-start">Start enrollment (3 min)</button>
+            <button class="ghost sm" id="w-enroll-stop">Stop</button></div></div>
+        <div class="small muted">The robot records every "Floaty" you say while the window is open (it does not wake on them)
+          and shows the count on its screen. Tap the card on the robot to end early. By voice: "Hey Floaty, learn my voice".</div>
+        <dl class="kv" id="w-enroll"></dl></div>
+      <div class="card"><div class="top"><h2>Detector settings</h2><span class="small muted">sent to the robot on every link reply</span></div>
+        <div class="row"><input id="w-cutoff" type="number" min="1" max="255" step="1" placeholder="cutoff 1..255" aria-label="cutoff">
+          <input id="w-window" type="number" min="1" max="50" step="1" placeholder="window 1..50" aria-label="window">
+          <input id="w-floor" type="number" min="0.05" max="0.99" step="0.01" placeholder="near miss floor" aria-label="near miss floor"></div>
+        <div class="row" style="margin-top:8px"><button class="sm" id="w-params-save">Save</button>
+          <span class="small muted">empty field = not sent (the robot keeps its own value)</span></div></div>
+    </div>
+    <div class="card"><div class="top"><h2>Enrollment batches</h2>
+        <button class="ghost sm" id="w-nm-false">Unlabeled near misses: mark all false</button></div>
+      <div class="scroll"><table id="w-batches"></table></div></div>
+    <div class="card"><div class="top"><h2>Wakes</h2>
+        <div class="row"><span class="small muted">label each clip for training: real or false</span>
+          <select id="w-filter" aria-label="Show"><option value="">all</option><option value="wakes">wakes</option>
+            <option value="nearmiss">near misses</option><option value="enroll">enrollment</option></select></div></div>
+      <div class="scroll"><table id="w-events"></table></div></div>
+  </section>
+  <section id="router">
+    <div class="card">
+      <div class="top"><h2>Shadow router</h2>
+        <div class="row"><select id="r-days" aria-label="Period"><option value="1">today and yesterday</option><option value="7">7 days</option>
+          <option value="30" selected>30 days</option><option value="3650">all</option></select>
+          <select id="r-source" aria-label="Source"><option value="">all sources</option><option>voice</option><option>ask</option><option>admin</option></select></div></div>
+      <div class="small muted">Router A (and Router B) guess every user turn's route beside the real path and never route anything. Truth is the
+        gold label when reviewed, else the tool the voice model or agent really called.</div>
+      <div class="grid"><dl class="kv" id="r-sum"></dl><dl class="kv" id="r-lat"></dl></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>Agreement per label</h2><div class="scroll"><table id="r-per"></table></div></div>
+      <div class="card"><h2>Per day</h2><div class="scroll"><table id="r-day"></table></div></div>
+    </div>
+    <div class="card"><div class="top"><h2>Confusion</h2>
+      <select id="r-cm-model" aria-label="Model" style="width:auto"><option value="laya">Router A</option><option value="vela">Router B</option></select></div>
+      <div class="small muted">Rows: truth. Columns: the router's guess.</div>
+      <div class="scroll"><table id="r-cm"></table></div></div>
+    <div class="card"><div class="top"><h2>Recent turns</h2>
+      <select id="r-filter" aria-label="Filter" style="width:auto"><option value="all">all</option><option value="disagree">Router A disagrees</option>
+        <option value="corrected">user corrected</option><option value="unreviewed">not reviewed</option></select></div>
+      <div class="scroll"><table id="r-recent"></table></div></div>
+    <div class="card">
+      <div class="top"><h2>Label review <span class="muted small" id="x-count"></span></h2>
+        <div class="row"><button class="ghost sm" id="x-import" title="Pull new turns from the shadow log, ask goals and the brain log">Import new</button>
+          <button class="ghost sm" id="x-export" title="Write train / validation / test files to data/route_dataset">Export splits</button></div></div>
+      <div class="row">
+        <select id="x-filter" aria-label="Filter"><option value="unreviewed">to review</option><option value="disagree">Router A disagrees</option>
+          <option value="reviewed">reviewed</option><option value="all">all</option></select>
+        <select id="x-source" aria-label="Source"><option value="">all sources</option><option>shadow</option><option>log</option><option>audit</option></select>
+        <select id="x-label" aria-label="Label"><option value="">all labels</option></select>
+      </div>
+      <div class="small muted"><kbd>j</kbd>/<kbd>k</kbd> move, <kbd>Enter</kbd> or <kbd>y</kbd> accept the suggested label,
+        <kbd>1</kbd>-<kbd>3</kbd> pick a candidate, <kbd>/</kbd> type any label, <kbd>s</kbd> skip (not a usable example), <kbd>u</kbd> clear.</div>
+      <div class="row"><input id="x-pick" list="x-labels" placeholder="type a label, Enter applies it to the selected item" autocomplete="off">
+        <datalist id="x-labels"></datalist></div>
+      <div class="list" id="x-list"></div>
+      <details><summary>Per label counts</summary><div class="scroll"><table id="x-per"></table></div></details>
+    </div>
+  </section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtTs = (t) => {
+  if (!t) return "";
+  const d = typeof t === "number" ? new Date(t * 1000) : new Date(t);
+  if (isNaN(d)) return String(t);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+};
+const ago = (s) => s == null ? "never" : s < 60 ? `${Math.round(s)} s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${(s / 3600).toFixed(1)} h ago`;
+const kv = (pairs) => pairs.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("");
+const badge = (t, cls = "") => `<span class="badge ${cls}">${esc(t)}</span>`;
+const trunc = (s, n = 160) => { s = String(s ?? ""); return s.length > n ? s.slice(0, n) + "..." : s; };
+
+let toastT;
+function toast(msg, err = false) {
+  const t = $("toast"); t.textContent = msg; t.className = "show" + (err ? " err" : "");
+  clearTimeout(toastT); toastT = setTimeout(() => (t.className = ""), 2600);
+}
+
+async function api(method, path, body) {
+  const opt = { method, headers: {} };
+  if (body instanceof FormData) opt.body = body;
+  else if (body !== undefined) { opt.body = JSON.stringify(body); opt.headers["Content-Type"] = "application/json"; }
+  const r = await fetch(path, opt);
+  const text = await r.text();
+  let data; try { data = text ? JSON.parse(text) : {}; } catch { data = { error: text }; }
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+const run = (fn) => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message, true); } };
+
+// table from rows of objects
+function tableHtml(rows, cols, render = {}) {
+  if (!rows || !rows.length) return `<tr><td class="empty">Nothing here yet.</td></tr>`;
+  cols = cols || Object.keys(rows[0]);
+  return `<thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map((r) => `<tr>${cols.map((c) => render[c] ? `<td>${render[c](r[c], r)}</td>` :
+      `<td>${esc(typeof r[c] === "object" && r[c] !== null ? JSON.stringify(r[c]) : r[c])}</td>`).join("")}</tr>`).join("") + "</tbody>";
+}
+
+/* overview */
+async function loadOverview() {
+  const [o, u] = await Promise.all([api("GET", "/admin/overview"), api("GET", "/usage").catch(() => null)]);
+  const r = o.robot, n = o.notify || {};
+  const dev = Object.entries(r.devices || {})[0];
+  $("ov-demo").hidden = !o.demo; $("ov-demo-text").textContent = o.demo_note || "";
+  $("ov-robot").innerHTML = kv([
+    ...(o.demo ? [["source", r.live ? badge("live from the sensor hub", "ok") : badge("demo values", "warn")]] : []),
+    ["link", `${r.seen_s_ago != null && r.seen_s_ago < 10 ? '<span class="dot on"></span>' : '<span class="dot off"></span>'} ${esc(ago(r.seen_s_ago))}`],
+    ["firmware", dev ? esc(`${dev[1].app_version || "?"} (${dev[0]})`) : "unknown"],
+    ["last OTA", dev ? esc(fmtTs(dev[1].last_ota)) : ""],
+    ["talking", r.conversations.length ? r.conversations.map((c) => esc(`${c.provider} ${c.listen_state}`)).join(", ") : "no"],
+    ["sleep", n.sleep ? badge("asleep", "warn") : badge("awake", "ok")],
+    ["bell", n.card ? esc(`${n.card.count}: ${n.card.title}`) : "empty"],
+    ["brain up", esc(ago(o.uptime_s).replace(" ago", ""))],
+    ["tools", esc(o.tools)],
+    ["embed queue", esc(o.pending_embeddings ?? "")],
+  ]);
+  setStatus(r.seen_s_ago);
+
+  if (u && u.today) {
+    $("ov-usd").textContent = `$${(u.today.usd || 0).toFixed(3)}`;
+    const rows = Object.entries(u.today.models || {}).map(([m, v]) => ({ model: m, calls: v.calls, usd: v.usd }))
+      .sort((a, b) => b.usd - a.usd || b.calls - a.calls);
+    $("ov-usage").innerHTML = tableHtml(rows, ["model", "calls", "usd"], { usd: (v) => `$${Number(v || 0).toFixed(4)}` });
+    const more = [];
+    for (const k of ["last_7_days", "week", "total"]) if (u[k] && u[k].usd != null) more.push(`${k.replace(/_/g, " ")}: $${u[k].usd.toFixed(2)}`);
+    $("ov-usage-more").textContent = more.join("  ·  ");
+  }
+
+  const t = o.tracker;
+  if (t) {
+    $("ov-track").innerHTML = kv([
+      ["enabled", t.enabled ? badge("on", "ok") : badge("off")],
+      ["mode", esc(t.mode)], ["follow", esc(t.follow)],
+      ["frames / faces", esc(`${t.frames} / ${t.faces}`)],
+      ["face seen", esc(ago(t.face_seen_s_ago))],
+      ["pose", esc(JSON.stringify(t.pose))],
+      ["last move", esc((t.moves || []).slice(-1).map((m) => `${m.t} ${m.why}`).join(""))],
+    ]);
+    $("ov-follow").dataset.follow = t.follow ? "1" : "0";
+  }
+  // "frame": false means this backend has no camera frame (the demo); the brain leaves the key out
+  $("ov-frame").hidden = o.frame === false;
+  $("ov-frame").onerror = () => { $("ov-frame").removeAttribute("src"); $("ov-frame").hidden = true; };
+  if (o.frame !== false) $("ov-frame").src = "/track/frame.png?t=" + Date.now();
+
+  renderPending($("ov-pending"), o.pending);
+
+  const llm = o.llm || { providers: {} };
+  const prow = Object.entries(llm.providers).map(([name, p]) => ({ name, ...p }));
+  $("ov-llm").innerHTML = tableHtml(prow, ["name", "model", "healthy", "calls", "last_latency_s", "consecutive_failures", "circuit_open_s", "last_ok", "last_error"], {
+    healthy: (v, row) => !row.configured ? badge("not set") : v ? badge("ok", "ok") : badge("down", "bad"),
+    last_ok: (v) => esc(fmtTs(v)),
+    last_error: (v) => `<span class="small muted">${esc(trunc(v, 120))}</span>`,
+  });
+  $("ov-chains").textContent = Object.entries(llm.chains || {}).map(([k, v]) => `${k}: ${[].concat(v).join(" > ")}`).join("   ") +
+    (llm.embed_model ? `   embed: ${llm.embed_model}` : "");
+  $("ov-errors-card").hidden = !(o.errors && o.errors.length);
+  $("ov-errors").textContent = JSON.stringify(o.errors, null, 2);
+}
+
+function renderPending(el, pending) {
+  if (!pending || !pending.length) { el.innerHTML = `<div class="empty">Nothing is waiting.</div>`; return; }
+  el.innerHTML = pending.map((p) => `<div class="item"><div class="top"><b>${esc(p.tool)}</b>${badge(p.source)}</div>
+    <pre>${esc(JSON.stringify(p.args, null, 2))}</pre>
+    <div class="row"><button class="sm" data-approve="${esc(p.id)}">Approve</button><button class="ghost sm" data-deny="${esc(p.id)}">Cancel</button>
+    <span class="small muted">${esc(fmtTs(p.ts))}</span></div></div>`).join("");
+}
+document.addEventListener("click", run(async (e) => {
+  const a = e.target.closest("[data-approve],[data-deny]");
+  if (!a) return;
+  const approve = a.hasAttribute("data-approve");
+  const res = await api("POST", "/agent/approve", { id: a.dataset.approve || a.dataset.deny, approve });
+  if (res.error) throw new Error(res.error);
+  toast(approve ? "Approved and ran" : "Cancelled");
+  current === "tools" ? loadTools() : loadOverview();
+}));
+$("ov-follow").onclick = run(async () => {
+  await api("POST", "/track/follow", { enabled: $("ov-follow").dataset.follow !== "1" });
+  loadOverview();
+});
+
+function setStatus(seen) {
+  const live = seen != null && seen < 10;
+  $("dot").className = "dot " + (live ? "on" : "off");
+  $("statustext").textContent = live ? "Robot online" : seen == null ? "Robot not seen yet" : `Robot seen ${ago(seen)}`;
+}
+
+/* tools */
+let toolsCache = [], auditLimit = 50;
+function argSkeleton(schema) {
+  const out = {};
+  for (const [k, p] of Object.entries((schema && schema.properties) || {})) {
+    if (!(schema.required || []).includes(k)) continue;
+    out[k] = p.enum ? p.enum[0] : p.type === "integer" || p.type === "number" ? 0 : p.type === "boolean" ? false :
+      p.type === "object" ? {} : p.type === "array" ? [] : "";
+  }
+  return out;
+}
+function pickTool() {
+  const t = toolsCache.find((x) => x.name === $("t-name").value);
+  if (!t) return;
+  const props = Object.entries((t.parameters && t.parameters.properties) || {}).map(([k, p]) =>
+    `${k}${(t.parameters.required || []).includes(k) ? "*" : ""}: ${p.type || "any"}${p.enum ? " [" + p.enum.join("|") + "]" : ""}`).join(", ");
+  $("t-desc").textContent = `${t.permission}${t.fast ? ", fast" : ""} · ${t.description}${props ? "  Args: " + props : ""}`;
+  $("t-args").value = JSON.stringify(argSkeleton(t.parameters), null, 2);
+}
+async function loadTools() {
+  const [d, a, p] = await Promise.all([api("GET", "/agent/tools"), api("GET", `/agent/audit?limit=${auditLimit}`), api("GET", "/admin/pending")]);
+  toolsCache = d.tools;
+  const sel = $("t-name"), prev = sel.value;
+  sel.innerHTML = d.tools.map((t) => `<option>${esc(t.name)}</option>`).join("");
+  if (prev && d.tools.some((t) => t.name === prev)) sel.value = prev; else pickTool();
+  $("t-count").textContent = `(${d.tools.length})`;
+  $("t-dir").textContent = `Tools dir: ${d.dir}` + (Object.keys(d.mcp || {}).length ? `  ·  MCP: ${JSON.stringify(d.mcp)}` : "");
+  const errs = d.errors && (Array.isArray(d.errors) ? d.errors.length : Object.keys(d.errors).length);
+  $("t-errors").hidden = !errs; $("t-errors").textContent = errs ? JSON.stringify(d.errors, null, 2) : "";
+  $("t-list").innerHTML = tableHtml(d.tools, ["name", "permission", "kind", "description"], {
+    name: (v, r) => `<b>${esc(v)}</b>${r.fast ? " " + badge("fast", "pink") : ""}`,
+    permission: (v) => badge(v, v),
+    kind: (v) => `<span class="small muted">${esc(v)}</span>`,
+    description: (v) => `<span class="small">${esc(v)}</span>`,
+  });
+  $("t-audit").innerHTML = tableHtml(a.rows, ["ts", "source", "tool", "ok", "ms", "args", "result"], {
+    ts: (v) => `<span class="nowrap">${esc(fmtTs(v))}</span>`,
+    ok: (v) => v ? badge("ok", "ok") : badge("no", "bad"),
+    args: (v) => `<code class="small">${esc(trunc(v, 120))}</code>`,
+    result: (v) => String(v || "").length > 140 ? `<details><summary>${esc(trunc(v, 100))}</summary><pre>${esc(v)}</pre></details>` : `<code class="small">${esc(v)}</code>`,
+  });
+  if (p.pending.length) renderPending($("ov-pending"), p.pending);
+}
+$("t-name").onchange = pickTool;
+let heldId = null;
+$("t-run").onclick = run(async () => {
+  let args;
+  try { args = JSON.parse($("t-args").value || "{}"); } catch (e) { throw new Error("args is not valid JSON: " + e.message); }
+  $("t-run").disabled = true; $("t-ms").textContent = "running...";
+  try {
+    const r = await api("POST", "/admin/tools/call", { name: $("t-name").value, args });
+    $("t-out").hidden = false; $("t-out").textContent = JSON.stringify(r.result, null, 2);
+    $("t-ms").textContent = `${r.ms} ms`;
+    heldId = r.result && r.result.needs_confirmation ? r.result.pending_id : null;
+    $("t-confirm").hidden = !heldId;
+    loadTools();
+  } finally { $("t-run").disabled = false; }
+});
+const decide = (approve) => run(async () => {
+  const r = await api("POST", "/agent/approve", { id: heldId, approve });
+  $("t-out").textContent = JSON.stringify(r, null, 2); $("t-confirm").hidden = true; heldId = null; loadTools();
+});
+$("t-yes").onclick = decide(true); $("t-no").onclick = decide(false);
+$("t-reload").onclick = run(async () => { const r = await api("POST", "/agent/tools/reload"); toast(`Reloaded: ${r.tools} tools, ${r.from_files} from files`); loadTools(); });
+$("t-audit-more").onclick = () => { auditLimit = auditLimit === 50 ? 200 : 50; $("t-audit-more").textContent = auditLimit === 50 ? "Show 200" : "Show 50"; run(loadTools)(); };
+
+/* memory (read only here: no remember, add or delete) */
+async function loadMemory() {
+  const [meta, f, d, e] = await Promise.all([api("GET", "/memory/meta").catch(() => ({})),
+    api("GET", "/memory/facts" + ($("m-all").checked ? "?all=1" : "")), api("GET", "/memory/docs"), api("GET", "/memory/episodes?limit=50")]);
+  $("m-demo").hidden = meta.label !== "demo data"; $("m-demo-text").textContent = meta.about || "";
+  $("m-fcount").textContent = `(${f.facts.length})`;
+  $("m-facts").innerHTML = tableHtml(f.facts, ["text", "kind", "entity", "created", "expires", "source"], {
+    text: (v) => esc(v), created: (v) => `<span class="small muted">${esc(fmtTs(v))}</span>`,
+    expires: (v) => `<span class="small muted">${esc(fmtTs(v))}</span>`,
+    source: (v) => `<span class="small muted">${esc(v)}</span>`,
+  });
+  $("d-list").innerHTML = tableHtml(d.documents, ["title", "chunks", "unembedded", "chars", "source", "created"], {
+    title: (v, r) => r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:var(--pink)">${esc(v)}</a>` : esc(v),
+    created: (v) => `<span class="small muted">${esc(fmtTs(v))}</span>`,
+  });
+  $("e-list").innerHTML = e.episodes.length ? e.episodes.map((x) => `<div class="item click" tabindex="0" data-ep="${esc(x.id)}">
+      <div class="top"><b class="small">${esc(fmtTs(x.started))}</b><span>${badge(x.status, x.status === "open" ? "warn" : "")} ${badge(x.turns + " turns")}</span></div>
+      <div class="small ${x.summary ? "" : "muted"}">${esc(x.summary || "no summary yet")}</div></div>`).join("")
+    : `<div class="empty">No talks stored yet.</div>`;
+}
+async function openEpisode(id) {
+  document.querySelectorAll("[data-ep]").forEach((el) => el.classList.toggle("sel", el.dataset.ep === id));
+  const x = await api("GET", `/memory/episodes/${encodeURIComponent(id)}`);
+  $("e-title").textContent = `Transcript ${fmtTs(x.started)}`;
+  const meta = [];
+  if (x.summary) meta.push(`<div class="item"><b class="small">Summary</b><div>${esc(x.summary)}</div></div>`);
+  if (x.open_loops && x.open_loops.length) meta.push(`<div class="item"><b class="small">Open loops</b><div class="small">${x.open_loops.map(esc).join("<br>")}</div></div>`);
+  if (x.new_facts && x.new_facts.length) meta.push(`<div class="item"><b class="small">New facts</b><div class="small">${x.new_facts.map((f) => esc(typeof f === "string" ? f : JSON.stringify(f))).join("<br>")}</div></div>`);
+  $("e-view").innerHTML = meta.join("") + ((x.turns || []).map((t) =>
+    `<div class="turn ${esc(t.role)}"><span class="small muted">${esc(t.role)} ${esc((t.ts || "").slice(11, 16))}</span><br>${esc(t.text)}</div>`).join("")
+    || `<div class="empty">No turns.</div>`);
+}
+$("m-all").onchange = run(loadMemory);
+document.addEventListener("click", run(async (e) => {
+  const ep = e.target.closest("[data-ep]");
+  if (ep) { await openEpisode(ep.dataset.ep); $("e-view").scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+}));
+document.addEventListener("keydown", run(async (e) => {
+  const ep = e.target.closest && e.target.closest("[data-ep]");
+  if (ep && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); await openEpisode(ep.dataset.ep); }
+}));
+$("m-recall").onclick = run(async () => {
+  const q = $("m-q").value.trim(); if (!q) return;
+  const r = await api("POST", "/memory/recall", { query: q, k: 8 });
+  $("m-results").innerHTML = r.results.length ? r.results.map((x) => `<div class="item${x.source === "episode" ? " click" : ""}" ${x.source === "episode" ? `data-ep="${esc(x.id)}"` : ""}><div class="top">${badge(x.source || "hit", "pink")}
+      <span class="small muted">${esc(x.score != null ? Number(x.score).toFixed(3) : "")} ${esc(x.title || fmtTs(x.when) || "")}</span></div>
+      <div class="small">${esc(x.text || x.snippet || JSON.stringify(x))}</div></div>`).join("") : `<div class="empty">No matches.</div>`;
+});
+$("m-q").onkeydown = (e) => { if (e.key === "Enter") $("m-recall").click(); };
+/* Ask Floaty: memory recall picks the context, a model on 0G Private Computer writes the answer */
+async function loadAskInfo() {
+  try {
+    const m = await api("GET", "/memory/meta"); const a = m.ask || {};
+    $("m-ask-info").innerHTML = a.configured
+      ? `Ask answers through ${badge("0G Private Computer", "pink")} ${esc(a.model)} · ${esc(a.trust_mode || "no trust header")}${a.trust_mode === "private" ? " (Intel TDX enclave)" : ""}`
+      : `Ask is off: set ZG_API_KEY (see .env.example) to answer through 0G Private Computer. Keys at pc.0g.ai.`;
+  } catch (e) { $("m-ask-info").textContent = ""; }
+}
+loadAskInfo();
+$("m-ask").onclick = run(async () => {
+  const q = $("m-q").value.trim(); if (!q) return;
+  $("m-answer").innerHTML = `<div class="empty">Thinking on 0G...</div>`;
+  const r = await api("POST", "/memory/ask", { question: q });
+  if (!r.ok) { $("m-answer").innerHTML = `<div class="item"><div class="small">${esc(r.error)}</div></div>`; return; }
+  const meta = [r.model, r.trust_mode, r.provider ? "provider " + String(r.provider).slice(0, 10) + "..." : "", r.ms + " ms"].filter(Boolean).join(" · ");
+  $("m-answer").innerHTML = `<div class="item"><div class="top">${badge("Floaty", "pink")} <span class="small muted">${esc(meta)}</span></div>
+    <div>${esc(r.answer)}</div></div>`;
+  $("m-results").innerHTML = (r.used || []).map((x) => `<div class="item"><div class="top">${badge(x.source || "hit", "pink")}<span class="small muted">used as context</span></div><div class="small">${esc(x.text)}</div></div>`).join("");
+});
+
+/* framed tabs: Sensors and Faces are their own pages; the frame exists only while the tab is open, so the
+   robot streams sensors only while someone looks */
+const FRAMES = { sensors: "/sensors", faces: "/faces" };
+function mountFrame(tab) {
+  const host = $(tab + "-host");
+  if (host.firstChild) return;
+  const f = document.createElement("iframe");
+  f.className = "tabframe"; f.src = FRAMES[tab]; f.title = tab;
+  const fit = () => { try { f.style.height = f.contentDocument.documentElement.scrollHeight + "px"; } catch { /* other origin */ } };
+  f.onload = () => { fit(); try { new ResizeObserver(fit).observe(f.contentDocument.body); } catch { /* ignore */ } };
+  host.replaceChildren(f);
+}
+function unmountFrames(keep) {
+  for (const tab of Object.keys(FRAMES)) if (tab !== keep) $(tab + "-host").replaceChildren();
+}
+
+/* tables */
+async function loadTables() {
+  const d = await api("GET", "/db/tables");
+  $("db-list").innerHTML = d.tables.length ? d.tables.map((t) => `<div class="item click" data-table="${esc(t.name)}">
+      <div class="top"><b>${esc(t.name)}</b>${badge(t.rows + " rows")}</div>
+      <div class="small muted">${t.columns.map((c) => esc(`${c.name} ${c.type}`)).join(", ")}</div></div>`).join("")
+    : `<div class="empty">No tables yet. Say "start tracking my expenses" to the robot.</div>`;
+}
+document.addEventListener("click", run(async (e) => {
+  const t = e.target.closest("[data-table]"); if (!t) return;
+  const r = await api("GET", `/db/table/${encodeURIComponent(t.dataset.table)}?limit=200`);
+  $("db-title").textContent = r.table; $("db-meta").textContent = `${r.rows.length} rows (newest 200)`;
+  $("db-rows").innerHTML = tableHtml(r.rows);
+  $("db-sql").placeholder = `SELECT * FROM ${r.table} ORDER BY id DESC LIMIT 20`;
+}));
+$("db-run").onclick = run(async () => {
+  const sql = $("db-sql").value.trim() || $("db-sql").placeholder;
+  const r = await api("POST", "/db/query", { sql });
+  $("db-answer").textContent = `${r.count} rows${r.truncated ? " (truncated)" : ""}`;
+  $("db-out").innerHTML = tableHtml(r.rows);
+});
+$("db-ask").onclick = run(async () => {
+  const q = $("db-q").value.trim(); if (!q) return;
+  $("db-answer").textContent = "asking...";
+  const r = await api("POST", "/db/query", { question: q });
+  $("db-answer").textContent = [r.answer, r.sql].filter(Boolean).join("  ·  ");
+  $("db-out").innerHTML = tableHtml(r.rows || []);
+});
+
+/* crons */
+async function loadCrons() {
+  const d = await api("GET", "/cron");
+  $("c-list").innerHTML = d.crons.length ? d.crons.map((c) => `<div class="item">
+      <div class="top"><b>${esc(c.name)}</b><span>${badge(c.schedule, "pink")} ${badge(c.output)} ${c.priority === "urgent" ? badge("urgent", "bad") : ""}
+        ${c.enabled ? badge("on", "ok") : badge("off")} ${c.running ? badge("running", "warn") : ""}</span></div>
+      <div class="small">${esc(c.goal)}</div>
+      <div class="small muted">next ${esc(c.next_run_local || fmtTs(c.next_run) || "none")} · last ${esc(c.last_run_local || fmtTs(c.last_run) || "never")}</div>
+      ${c.last_result ? `<details><summary>last result</summary><pre>${esc(c.last_result)}</pre></details>` : ""}
+      <div class="row"><button class="sm" data-crun="${c.id}">Run now</button>
+        <button class="ghost sm" data-ctoggle="${c.id}" data-en="${c.enabled ? 1 : 0}">${c.enabled ? "Disable" : "Enable"}</button>
+        <button class="danger sm" data-cdel="${c.id}">Delete</button></div></div>`).join("")
+    : `<div class="empty">No routines yet.</div>`;
+}
+document.addEventListener("click", run(async (e) => {
+  const r = e.target.closest("[data-crun]"), t = e.target.closest("[data-ctoggle]"), d = e.target.closest("[data-cdel]");
+  if (r) {
+    if (!confirm("Run this routine now? It may notify or speak on the robot.")) return;
+    r.disabled = true; r.textContent = "running...";
+    try { const res = await api("POST", `/cron/${r.dataset.crun}/run`); toast(res.ok === false ? res.error || "failed" : trunc(res.answer || "done", 120), res.ok === false); }
+    finally { loadCrons(); }
+  }
+  if (t) { await api("PATCH", `/cron/${t.dataset.ctoggle}`, { enabled: t.dataset.en !== "1" }); loadCrons(); }
+  if (d) { if (!confirm("Delete this routine?")) return; await api("DELETE", `/cron/${d.dataset.cdel}`); toast("Deleted"); loadCrons(); }
+}));
+$("c-add").onclick = run(async () => {
+  await api("POST", "/cron", { name: $("c-name").value, schedule: $("c-sched").value, goal: $("c-goal").value,
+    output: $("c-out").value, priority: $("c-pri").value, enabled: $("c-en").value === "1" });
+  toast("Routine added"); ["c-name", "c-sched", "c-goal"].forEach((i) => ($(i).value = "")); loadCrons();
+});
+
+/* notifications */
+let forceSleep = null;
+async function loadNotify() {
+  const [d, o] = await Promise.all([api("GET", "/notify"), api("GET", "/admin/overview")]);
+  forceSleep = o.notify ? o.notify.force_sleep : null;
+  $("n-state").innerHTML = kv([
+    ["sleep", (d.sleeping ? badge("asleep", "warn") : badge("awake", "ok")) + " " + badge(forceSleep == null ? "schedule" : forceSleep ? "forced on" : "forced off")],
+    ["in a talk", d.busy ? "yes (normal items wait)" : "no"],
+    ["card", d.link.card ? esc(`${d.link.card.count}: ${d.link.card.title} (#${d.link.card.id})`) : "none"],
+    ["wake", esc(d.link.wake ? JSON.stringify(d.link.wake) : "none")],
+  ]);
+  document.querySelectorAll("[data-sleep]").forEach((b) => {
+    const v = b.dataset.sleep;
+    b.className = ((v === "auto" && forceSleep == null) || (v === "on" && forceSleep === true) || (v === "off" && forceSleep === false)) ? "sm" : "ghost sm";
+  });
+  $("n-queue").innerHTML = d.queue.length ? d.queue.map((n) => `<div class="item">
+      <div class="top"><b>${esc(n.title)}</b><span>${badge(n.state, n.state === "shown" ? "pink" : "")} ${n.priority !== "normal" ? badge(n.priority, n.priority === "urgent" ? "bad" : "") : ""}</span></div>
+      ${n.text ? `<div class="small">${esc(n.text)}</div>` : ""}
+      <div class="small muted">#${n.id} from ${esc(n.source)} · due ${esc(fmtTs(n.due))}${n.snooze_until ? " · snoozed to " + esc(fmtTs(n.snooze_until)) : ""}${n.expires ? " · expires " + esc(fmtTs(n.expires)) : ""}</div>
+      <div class="row"><button class="sm" data-nact="read" data-nid="${n.id}">Read</button><button class="ghost sm" data-nact="snooze" data-nid="${n.id}">Snooze</button>
+        <button class="danger sm" data-nact="dismiss" data-nid="${n.id}">Dismiss</button></div></div>`).join("")
+    : `<div class="empty">The bell is empty.</div>`;
+  $("n-hist").innerHTML = tableHtml(d.history, ["id", "title", "state", "priority", "source", "created", "text"], {
+    state: (v) => badge(v), created: (v) => `<span class="nowrap">${esc(fmtTs(v))}</span>`,
+    text: (v) => `<span class="small">${esc(trunc(v, 200))}</span>`,
+  });
+}
+document.addEventListener("click", run(async (e) => {
+  const a = e.target.closest("[data-nact]"), s = e.target.closest("[data-sleep]");
+  if (a) { const r = await api("POST", "/notify/action", { id: a.dataset.nid, action: a.dataset.nact }); toast(`${a.dataset.nact}: ${(r.ids || []).length || 1} item(s)`); loadNotify(); }
+  if (s) {
+    const force = s.dataset.sleep === "auto" ? null : s.dataset.sleep === "on";
+    await api("POST", "/notify/sleep", { force }); toast(force == null ? "Back on the sleep schedule" : force ? "Forced asleep" : "Forced awake"); loadNotify();
+  }
+}));
+$("n-send").onclick = run(async () => {
+  const title = $("n-title").value.trim(); if (!title) throw new Error("title required");
+  const r = await api("POST", "/notify", { title, text: $("n-text").value, priority: $("n-pri").value,
+    in_minutes: Number($("n-in").value) || 0, source: "admin" });
+  toast(`Queued #${r.id} (${r.state})`); $("n-title").value = ""; $("n-text").value = ""; loadNotify();
+});
+
+/* webhooks */
+async function loadHooks() {
+  const f = $("h-filter").value;
+  const [h, l] = await Promise.all([api("GET", "/hooks"), api("GET", "/hooks/log?limit=200" + (f ? "&hook=" + encodeURIComponent(f) : ""))]);
+  $("h-config").textContent = `Config: ${h.config}`;
+  const sel = $("h-filter");
+  sel.innerHTML = `<option value="">all hooks</option>` + h.hooks.map((x) => `<option ${x.name === f ? "selected" : ""}>${esc(x.name)}</option>`).join("");
+  const origin = location.origin;
+  $("h-list").innerHTML = h.hooks.length ? h.hooks.map((x) => `<div class="item">
+      <div class="top"><b>${esc(x.name)}</b><span>${badge(x.action, "pink")} ${x.has_secret ? badge("secret", "ok") : badge("no secret", "bad")} ${badge(x.priority || "normal")}</span></div>
+      <code class="small">${esc(origin + x.url)}</code>
+      <div class="small muted">${[x.title && "title: " + x.title, x.table && "table: " + x.table, x.goal && "goal: " + x.goal].filter(Boolean).map(esc).join(" · ")}</div></div>`).join("")
+    : `<div class="empty">No hooks. Edit the config file above.</div>`;
+  $("h-log").innerHTML = tableHtml(l.log, ["at", "hook", "status", "action", "detail", "error"], {
+    at: (v) => `<span class="nowrap">${esc(fmtTs(v))}</span>`,
+    status: (v) => badge(v, v === "ok" ? "ok" : v === "queued" || v === "running" ? "warn" : "bad"),
+    detail: (v) => `<code class="small">${esc(trunc(v, 160))}</code>`,
+    error: (v) => `<span class="small" style="color:var(--bad)">${esc(trunc(v, 160))}</span>`,
+  });
+}
+$("h-filter").onchange = run(loadHooks);
+
+/* wake */
+const WAKE_FILTER = { "": "", wakes: "&exclude=nearmiss,enroll", nearmiss: "&verdict=nearmiss", enroll: "&verdict=enroll" };
+function enrollKv(e) {
+  const last = e.last ? `${esc(e.last.id)}: ${esc(e.last.count)} clips (${esc(e.last.why)})` : "none";
+  $("w-enroll").innerHTML = kv([
+    ["state", e.active ? badge("recording", "ok") : e.pending ? badge("starts after the conversation", "warn") : badge("off")],
+    ["batch", esc(e.id || "")],
+    ["count", e.id ? esc(`${e.count} / ${e.target}`) : ""],
+    ["time left", e.active ? esc(`${e.seconds_left} s`) : ""],
+    ["last batch", last],
+  ]);
+}
+async function loadEnroll() { enrollKv(await api("GET", "/wake/enroll")); }
+async function loadWake() {
+  const f = $("w-filter").value;
+  const [d, b] = await Promise.all([api("GET", `/wake?limit=${f ? 500 : 100}&hours=48${WAKE_FILTER[f] || ""}`),
+    api("GET", "/wake/batches")]);
+  $("w-state").innerHTML = kv([
+    ["mode", badge(d.mode, d.mode === "on" ? "ok" : "warn")],
+    ["model", esc(d.model) + (d.ready ? "" : " " + badge(d.error ? "error" : "loading", "bad"))],
+    ["accepts", esc((d.words || []).join(", "))],
+    ["latency", esc((d.latency_ms || []).slice(-10).join(", ") || "none yet") + " ms"],
+  ]);
+  if (d.enroll) enrollKv(d.enroll);
+  const p = d.params || {};
+  if (document.activeElement?.closest?.("#wake .row") == null) {
+    $("w-cutoff").value = p.cutoff ?? ""; $("w-window").value = p.window ?? ""; $("w-floor").value = p.nearmiss_floor ?? "";
+  }
+  $("w-hours").innerHTML = tableHtml(d.per_hour.slice().reverse(), ["hour", "detects", "accepted", "rejected", "failed_open", "nearmiss", "enroll", "labeled_real", "labeled_false"]);
+  $("w-batches").innerHTML = tableHtml(b.batches, ["batch", "first", "clips", "real", "false", "unlabeled", "label"], {
+    first: (v) => `<span class="nowrap">${esc(fmtTs(v))}</span>`,
+    label: (v, r) => `<span class="nowrap">${["real", "false"].map((l) =>
+      `<button class="ghost sm" data-wbatch="${esc(r.batch)}" data-wblabel="${l}">all ${l}</button>`).join(" ")}</span>`,
+  });
+  const verdictCls = (v) => v === "accept" ? "ok" : v === "reject" ? "bad" : v === "nearmiss" || v === "enroll" ? "pink" : "warn";
+  const score = (r) => {
+    const s = r.scores || {};
+    const parts = [];
+    if (s.mww != null) parts.push(`mww ${s.mww}` + (s.max != null ? ` (max ${s.max})` : ""));
+    if (s.kw_score != null) parts.push(`kw ${s.kw_score}`);
+    if (s.enroll_batch) parts.push(`${s.enroll_batch} #${s.n}`);
+    return parts.join(", ");
+  };
+  $("w-events").innerHTML = tableHtml(d.events, ["id", "ts", "wake_word", "verdict", "score", "transcript", "latency_ms", "user_spoke", "clip", "label"], {
+    ts: (v) => `<span class="nowrap">${esc(fmtTs(v))}</span>`,
+    verdict: (v, r) => badge(v === "nearmiss" ? "near miss" : v, verdictCls(v)) + (!["on", "nearmiss", "enroll"].includes(r.mode) ? " " + badge(r.mode) : ""),
+    score: (v, r) => `<span class="small nowrap">${esc(score(r))}</span>`,
+    user_spoke: (v) => v ? "yes" : "",
+    clip: (v, r) => v ? `<audio controls preload="none" src="/wake/${r.id}/clip.wav"></audio>` : "",
+    label: (v, r) => `<span class="nowrap">${["real", "false"].map((l) =>
+      `<button class="${v === l ? "" : "ghost "}sm" data-wlabel="${l}" data-wid="${r.id}">${l}</button>`).join(" ")}</span>`,
+  });
+}
+$("w-filter").onchange = run(loadWake);
+$("w-enroll-start").onclick = run(async () => {
+  const e = await api("POST", "/wake/enroll", { seconds: 180, target: 40 }); enrollKv(e); toast(`Enrollment ${e.id} open for 3 min: say Hey Floaty to the robot`);
+});
+$("w-enroll-stop").onclick = run(async () => { const e = await api("POST", "/wake/enroll", { stop: true }); enrollKv(e); toast(e.stopped ? `Stopped ${e.stopped}` : "No enrollment was open"); });
+$("w-params-save").onclick = run(async () => {
+  const num = (id) => $(id).value.trim() === "" ? null : Number($(id).value);
+  const r = await api("POST", "/wake/params", { cutoff: num("w-cutoff"), window: num("w-window"), nearmiss_floor: num("w-floor") });
+  toast(`Detector settings: ${JSON.stringify(r.params)}`);
+});
+$("w-nm-false").onclick = run(async () => {
+  if (!confirm("Mark every unlabeled near miss as false?")) return;
+  const r = await api("POST", "/wake/label_many", { verdict: "nearmiss", unlabeled: true, label: "false" });
+  toast(`${r.updated} near misses marked false`); loadWake();
+});
+document.addEventListener("click", run(async (e) => {
+  const bb = e.target.closest("[data-wbatch]");
+  if (bb) {
+    const r = await api("POST", "/wake/label_batch", { batch: bb.dataset.wbatch, label: bb.dataset.wblabel });
+    toast(`${r.batch}: ${r.updated} clips ${r.label}`); loadWake(); return;
+  }
+  const b = e.target.closest("[data-wlabel]"); if (!b) return;
+  await api("POST", `/wake/${b.dataset.wid}/label`, { label: b.dataset.wlabel }); toast(`#${b.dataset.wid}: ${b.dataset.wlabel}`); loadWake();
+}));
+
+/* router */
+let routeLabels = [];
+const pct = (v) => v == null ? "" : `${Math.round(v * 100)}%`;
+async function routeLabelList() {
+  if (!routeLabels.length) {
+    routeLabels = (await api("GET", "/route/labels")).labels;
+    $("x-labels").innerHTML = routeLabels.map((l) => `<option value="${esc(l.name)}">${esc(l.description)}</option>`).join("");
+    $("x-label").innerHTML = `<option value="">all labels</option>` + routeLabels.map((l) => `<option>${esc(l.name)}</option>`).join("");
+  }
+  return routeLabels;
+}
+async function loadRouter() {
+  await routeLabelList();
+  const q = `days=${$("r-days").value}&source=${encodeURIComponent($("r-source").value)}`;
+  const [st, rec] = await Promise.all([api("GET", "/route/stats?" + q),
+    api("GET", `/route/recent?limit=60&filter=${$("r-filter").value}&source=${encodeURIComponent($("r-source").value)}`)]);
+  const L = st.laya, V = st.vela;
+  $("r-sum").innerHTML = kv([
+    ["turns", esc(`${st.turns} (${st.labelled} with a truth label, ${st.gold} gold)`)],
+    ["Router A agrees", `<b>${pct(L.rate)}</b> ${esc(`of ${L.scored}`)}`],
+    ["Router B agrees", st.vela_enabled ? `<b>${pct(V.rate)}</b> ${esc(`of ${V.scored}`)}` : badge("off")],
+    ["sources", esc(Object.entries(st.by_source).map(([k, v]) => `${k} ${v}`).join(", ") || "none")],
+    ["user corrections", esc(st.corrections)], ["echo turns", esc(st.echo)],
+  ]);
+  const lat = (x) => x.n ? esc(`${x.p50} / ${x.p90} / ${x.p99} ms (${x.n})`) : "none yet";
+  $("r-lat").innerHTML = kv([
+    ["Router A p50/p90/p99", lat(L.latency_ms)], ["Router B p50/p90/p99", lat(V.latency_ms)],
+    ["Router A served by", esc(Object.entries(st.laya_backend).map(([k, v]) => `${k} ${v}`).join(", "))],
+    ["errors", esc(`Router A ${L.errors}, Router B ${V.errors}`)], ["dropped (queue full)", esc(st.dropped_since_start)],
+  ]);
+  const labs = [...new Set([...Object.keys(L.per_label), ...Object.keys(V.per_label)])];
+  $("r-per").innerHTML = labs.length ? `<thead><tr><th>label</th><th class="num">turns</th><th class="num">Router A</th><th class="num">Router B</th></tr></thead><tbody>` +
+    labs.map((k) => { const a = L.per_label[k], b = V.per_label[k];
+      return `<tr><td>${esc(k)}</td><td class="num">${(a || b).n}</td><td class="num">${a ? pct(a.rate) : ""}</td><td class="num">${b ? pct(b.rate) : ""}</td></tr>`; }).join("") + "</tbody>"
+    : `<tr><td class="empty">No labelled turns yet.</td></tr>`;
+  $("r-day").innerHTML = tableHtml(st.per_day.map((d) => ({ day: d.day, turns: d.turns,
+    laya: d.laya_scored ? `${pct(d.laya_agree / d.laya_scored)} of ${d.laya_scored}` : "",
+    vela: d.vela_scored ? `${pct(d.vela_agree / d.vela_scored)} of ${d.vela_scored}` : "" })), ["day", "turns", "laya", "vela"]);
+  window._routeStats = st; drawConfusion();
+  $("r-recent").innerHTML = tableHtml(rec.rows, ["ts", "source", "text", "actual", "laya", "vela", "gold"], {
+    ts: (v) => `<span class="nowrap">${esc(fmtTs(v))}</span>`,
+    text: (v, r) => esc(trunc(v, 140)) + (r.echo ? " " + badge("echo", "warn") : "") + (r.correction ? " " + badge(r.correction, "bad") : ""),
+    actual: (v, r) => (r.actual_label ? badge(r.actual_label, "pink") : badge("open")) +
+      `<div class="small muted">${esc(r.tools.map((t) => t.name + (t.ok === false ? " (failed)" : "")).join(", "))}</div>`,
+    laya: (v, r) => r.laya_label ? badge(`${r.laya_label} ${pct(r.laya_conf)}`, r.laya_label === (r.gold_label || r.actual_label) ? "ok" : "warn") +
+      `<div class="small muted">${esc(r.laya_ms ?? "")} ms</div>` : `<span class="small muted">${esc(trunc(r.laya_error || "waiting", 40))}</span>`,
+    vela: (v, r) => r.vela_label ? badge(`${r.vela_label} ${pct(r.vela_conf)}`, r.vela_label === (r.gold_label || r.actual_label) ? "ok" : "warn") : "",
+    gold: (v, r) => `<select class="r-gold" data-rid="${r.id}" aria-label="Gold label">` + `<option value="">${r.gold_label ? "clear" : "-"}</option>` +
+      routeLabels.map((l) => `<option ${l.name === r.gold_label ? "selected" : ""}>${esc(l.name)}</option>`).join("") + "</select>",
+  });
+  await loadReview();
+}
+function drawConfusion() {
+  const st = window._routeStats; if (!st) return;
+  const m = st[$("r-cm-model").value].confusion;
+  const rows = Object.keys(m), cols = [...new Set(rows.concat(...rows.map((r) => Object.keys(m[r]))))];
+  $("r-cm").innerHTML = rows.length ? `<thead><tr><th>truth \ guess</th>${cols.map((c) => `<th class="num">${esc(c)}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map((r) => `<tr><td>${esc(r)}</td>${cols.map((c) => { const n = m[r][c] || 0;
+      return `<td class="num ${n ? (c === r ? "hot" : "miss") : "muted"}">${n || ""}</td>`; }).join("")}</tr>`).join("") + "</tbody>"
+    : `<tr><td class="empty">Nothing scored yet.</td></tr>`;
+}
+["r-days", "r-source", "r-filter"].forEach((id) => $(id).onchange = run(loadRouter));
+$("r-cm-model").onchange = drawConfusion;
+document.addEventListener("change", run(async (e) => {
+  const s = e.target.closest(".r-gold"); if (!s) return;
+  await api("POST", `/route/${s.dataset.rid}/label`, { label: s.value || null }); toast(s.value ? `Turn #${s.dataset.rid}: ${s.value}` : "Cleared");
+}));
+
+let review = [], sel = 0;
+async function loadReview() {
+  const q = `filter=${$("x-filter").value}&source=${encodeURIComponent($("x-source").value)}&label=${encodeURIComponent($("x-label").value)}&limit=300`;
+  const d = await api("GET", "/route/examples?" + q);
+  review = d.rows; sel = Math.min(sel, Math.max(0, review.length - 1));
+  const c = d.counts;
+  $("x-count").textContent = `${review.length} shown · ${c.real} real (${c.gold} gold, ${c.skipped} skipped) · ${c.synthetic} synthetic · ${c.benchmark} benchmark`;
+  $("x-per").innerHTML = tableHtml(Object.entries(c.per_label).map(([k, v]) => ({ label: k, real: v.real, gold: v.gold, synthetic: v.synthetic || 0, benchmark: v.benchmark || 0 })),
+    ["label", "real", "gold", "synthetic", "benchmark"]);
+  drawReview();
+}
+const candidates = (r) => [...new Set([r.gold_label, r.auto_label, r.laya_label, r.vela_label].filter(Boolean))].slice(0, 3);
+function drawReview() {
+  $("x-list").innerHTML = review.length ? review.map((r, i) => `<div class="item click ${i === sel ? "sel" : ""}" data-xi="${i}">
+      <div class="top"><b>${esc(r.text)}</b><span class="small muted nowrap">${esc(r.source)} ${esc(fmtTs(r.ts))}</span></div>
+      <div class="row small">${candidates(r).map((c, j) => `<button class="${c === r.gold_label ? "" : "ghost "}sm" data-xpick="${esc(c)}" data-xi="${i}">${j + 1} ${esc(c)}</button>`).join("")}
+        <span class="muted">auto ${esc(r.auto_label)}${r.laya_label ? " · Router A " + esc(r.laya_label) : ""}${r.vela_label ? " · Router B " + esc(r.vela_label) : ""}${(r.meta.tools || []).length ? " · tools " + esc(r.meta.tools.join(", ")) : ""}</span>
+        ${r.gold_label ? badge("gold " + r.gold_label, "ok") : ""}${r.skip ? badge("skipped", "bad") : ""}</div></div>`).join("")
+    : `<div class="empty">Nothing to review here. Import new turns, or pick another filter.</div>`;
+  const el = $("x-list").querySelector(".item.sel"); if (el) el.scrollIntoView({ block: "nearest" });
+}
+async function setLabel(i, label, skip = false) {
+  const r = review[i]; if (!r) return;
+  await api("POST", `/route/examples/${r.id}/label`, { label, skip });
+  r.gold_label = label; r.skip = skip ? 1 : 0;
+  toast(skip ? "Skipped" : label ? `Gold: ${label}` : "Cleared");
+  if (label || skip) sel = Math.min(i + 1, review.length - 1);
+  drawReview();
+}
+$("x-list").onclick = run(async (e) => {
+  const b = e.target.closest("[data-xpick]");
+  if (b) return setLabel(Number(b.dataset.xi), b.dataset.xpick);
+  const it = e.target.closest("[data-xi]"); if (it) { sel = Number(it.dataset.xi); drawReview(); }
+});
+$("x-pick").onkeydown = run(async (e) => {
+  if (e.key === "Escape") { e.target.blur(); return; }
+  if (e.key !== "Enter") return;
+  const v = e.target.value.trim();
+  if (!routeLabels.some((l) => l.name === v)) throw new Error(`unknown label ${v}`);
+  e.target.value = ""; e.target.blur(); await setLabel(sel, v);
+});
+document.addEventListener("keydown", run(async (e) => {
+  if (current !== "router" || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target.closest("input, textarea, select")) return;
+  const r = review[sel];
+  if (e.key === "j" || e.key === "ArrowDown") { sel = Math.min(sel + 1, review.length - 1); drawReview(); e.preventDefault(); }
+  else if (e.key === "k" || e.key === "ArrowUp") { sel = Math.max(sel - 1, 0); drawReview(); e.preventDefault(); }
+  else if ((e.key === "Enter" || e.key === "y") && r) await setLabel(sel, r.gold_label || r.auto_label);
+  else if (/^[1-3]$/.test(e.key) && r) { const c = candidates(r)[Number(e.key) - 1]; if (c) await setLabel(sel, c); }
+  else if (e.key === "/") { e.preventDefault(); $("x-pick").focus(); }
+  else if (e.key === "s" && r) await setLabel(sel, null, true);
+  else if (e.key === "u" && r) await setLabel(sel, null, false);
+}));
+["x-filter", "x-source", "x-label"].forEach((id) => $(id).onchange = run(async () => { sel = 0; await loadReview(); }));
+$("x-import").onclick = run(async () => {
+  const r = await api("POST", "/route/examples/import");
+  toast(`Imported ${r.shadow} shadow, ${r.audit} ask goals, ${r.log} log turns (${r.total} in all). Router A guesses fill in shortly.`);
+  await loadReview();
+});
+$("x-export").onclick = run(async () => {
+  const d = await api("POST", "/route/dataset");
+  const s = d.manifest.splits; toast(`Wrote train ${s.train.n}, val ${s.val.n}, test ${s.test.n} to ${d.dir}`);
+});
+
+/* tabs: which ones are live comes from GET /api/tabs (TABS and ENABLED in dashboard/config.py, or --tabs) */
+const loaders = { overview: loadOverview, tools: loadTools, memory: loadMemory, tables: loadTables, crons: loadCrons, notify: loadNotify,
+  hooks: loadHooks, wake: loadWake, router: loadRouter, sensors: async () => mountFrame("sensors"), faces: async () => mountFrame("faces") };
+let current = "overview", live = [];
+function show(tab) {
+  if (!live.includes(tab)) tab = live[0];
+  if (!tab) return;
+  current = tab;
+  unmountFrames(tab);
+  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+  document.querySelectorAll("main > section").forEach((s) => s.classList.toggle("on", s.id === tab));
+  if (location.hash !== "#" + tab) history.replaceState(null, "", "#" + tab);
+  run(loaders[tab])();
+}
+async function loadTabs() {
+  const { tabs } = await api("GET", "/api/tabs");
+  live = tabs.filter((t) => t.enabled && loaders[t.id]).map((t) => t.id);
+  $("tabs").innerHTML = tabs.filter((t) => t.enabled || t.listed).map((t) => t.enabled
+    ? `<button data-tab="${esc(t.id)}" title="${esc(t.blurb)}">${esc(t.label)}</button>`
+    : `<button disabled title="${esc(t.blurb)}">${esc(t.label)}<span class="later">later</span></button>`).join("");
+}
+$("tabs").onclick = (e) => { const b = e.target.closest("button[data-tab]"); if (b) show(b.dataset.tab); };
+$("refresh").onclick = () => run(loaders[current])();
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+run(async () => { await loadTabs(); show(location.hash.slice(1) || live[0]); })();
+// Keep the header and the overview live; other tabs refresh on demand so forms are not clobbered
+setInterval(() => {
+  if (document.hidden) return;
+  if (current === "overview") run(loadOverview)();
+  else if (current === "wake") { run(loadEnroll)(); api("GET", "/admin/overview").then((o) => setStatus(o.robot.seen_s_ago)).catch(() => {}); }
+  else api("GET", "/admin/overview").then((o) => setStatus(o.robot.seen_s_ago)).catch(() => {});
+}, 5000);
+</script>
+</body>
+</html>

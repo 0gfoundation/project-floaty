@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robot Senses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0b0f12; --panel: #12181d; --panel2: #171f25; --line: #24303a; --dim: #6c7d89; --fg: #d9e3ea; --strong: #f2f7fa;
+  --amber: #f5b841; --teal: #45c9b8; --red: #ef6a5a; --blue: #6aa7f5; --violet: #b18cf2; --green: #7bd88f;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); }
+.wrap { max-width: 1400px; margin: 0 auto; padding-block: 16px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+h1 { font: 600 18px var(--mono); letter-spacing: .04em; margin: 0; color: var(--strong); }
+h1 small { color: var(--dim); font-weight: 400; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.pill { font: 12px var(--mono); padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--dim); white-space: nowrap; }
+.pill b { font-weight: 500; color: var(--fg); }
+.pill.ok { border-color: color-mix(in srgb, var(--teal) 55%, transparent); }
+.pill.ok::before, .pill.bad::before, .pill.wait::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.pill.ok::before { background: var(--teal); }
+.pill.bad::before { background: var(--red); }
+.pill.wait::before { background: var(--amber); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, select { font: 500 13px var(--mono); background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button.on { background: color-mix(in srgb, var(--amber) 18%, var(--panel2)); border-color: var(--amber); color: var(--amber); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.card h2 { margin: 0; font: 600 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; gap: 8px; }
+.card h2 span { letter-spacing: 0; text-transform: none; font-weight: 400; }
+.hear { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 900px) { .hear { grid-template-columns: 1fr; } }
+.meter { position: relative; height: 26px; background: var(--panel2); border-radius: 6px; overflow: hidden; }
+.meter .fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #2c6f66, var(--teal) 60%, var(--amber) 85%, var(--red)); width: 0; transition: width 60ms linear; }
+.meter .peak, .meter .floor { position: absolute; top: 0; bottom: 0; width: 2px; }
+.meter .peak { background: var(--strong); }
+.meter .floor { background: var(--violet); }
+.meter .lbl { position: absolute; right: 8px; top: 4px; font: 12px var(--mono); color: var(--strong); text-shadow: 0 0 4px #000; }
+.scale { display: flex; justify-content: space-between; font: 10px var(--mono); color: var(--dim); margin-top: -6px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font: 12px var(--mono); color: var(--dim); }
+.row b { color: var(--fg); font-weight: 500; }
+.lamp { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--line); vertical-align: -1px; margin-right: 5px; }
+.lamp.on { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.lamp.tl.on { background: var(--teal); border-color: var(--teal); box-shadow: 0 0 8px var(--teal); }
+canvas { display: block; width: 100%; max-width: 100%; border-radius: 6px; background: #070a0c; }
+#spec { height: 170px; }
+#wave { height: 46px; }
+.partial { font: 500 20px/1.35 var(--sans); color: var(--strong); min-height: 2.7em; padding: 10px 12px; border-radius: 8px; background: var(--panel2); border-left: 3px solid var(--amber); }
+.partial.idle { color: var(--dim); font-weight: 400; font-size: 15px; border-left-color: var(--line); }
+.feed { display: grid; gap: 6px; max-height: 360px; overflow-y: auto; align-content: start; }
+.line { display: grid; grid-template-columns: auto auto 1fr; gap: 4px 10px; align-items: baseline; padding: 6px 8px; border-radius: 7px; background: var(--panel2); }
+.line .t { font: 11px var(--mono); color: var(--dim); }
+.line .x { font-size: 15px; color: var(--fg); min-width: 0; overflow-wrap: anywhere; }
+.line .m { grid-column: 3; font: 11px var(--mono); color: var(--dim); }
+.chip { font: 600 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.c-stt { background: color-mix(in srgb, var(--amber) 20%, transparent); color: var(--amber); }
+.c-realtime { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
+.c-assistant { background: color-mix(in srgb, var(--green) 18%, transparent); color: var(--green); }
+.c-listen { background: color-mix(in srgb, var(--violet) 20%, transparent); color: var(--violet); }
+.c-event { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font: 12px var(--mono); }
+.kv dt { color: var(--dim); }
+.kv dd { margin: 0; color: var(--fg); text-align: right; overflow-wrap: anywhere; }
+.bars { display: grid; gap: 5px; }
+.bar { display: grid; grid-template-columns: 34px 1fr 70px; gap: 8px; align-items: center; font: 12px var(--mono); }
+.bar .n { color: var(--dim); }
+.bar .v { text-align: right; color: var(--fg); }
+.track { position: relative; height: 10px; background: var(--panel2); border-radius: 5px; overflow: hidden; }
+.track .mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.track .f { position: absolute; top: 0; bottom: 0; background: var(--teal); border-radius: 5px; }
+.big { font: 600 30px var(--mono); color: var(--strong); }
+.big small { font-size: 13px; color: var(--dim); font-weight: 400; }
+.spark { height: 42px; }
+.na { font: 12px var(--mono); color: var(--dim); }
+#screen { aspect-ratio: 4 / 3; height: auto; }
+#servo { aspect-ratio: 2 / 1; height: auto; }
+#tilt { aspect-ratio: 2 / 1; height: auto; }
+.events { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; font: 12px var(--mono); }
+.events div { display: flex; gap: 10px; }
+.events .t { color: var(--dim); }
+details { font: 12px var(--mono); }
+details pre { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--dim); max-height: 420px; overflow: auto; margin: 8px 0 0; }
+.hint { font-size: 12px; color: var(--dim); }
+.flash { animation: flash .9s ease-out; }
+@keyframes flash { from { box-shadow: 0 0 0 2px var(--amber); } to { box-shadow: 0 0 0 0 transparent; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ROBOT SENSES <small>live</small></h1>
+    <div class="pills">
+      <span class="pill wait" id="p-brain">brain <b>connecting</b></span>
+      <span class="pill wait" id="p-robot">robot stream <b>waiting</b></span>
+      <span class="pill" id="p-state">state <b>?</b></span>
+      <span class="pill" id="p-rate">frames <b>0/s</b></span>
+      <span class="pill" id="p-audio">audio <b>0 kB/s</b></span>
+    </div>
+    <div class="controls">
+      <button id="b-play" title="Play the robot's mic through this computer">&#9654; Hear it</button>
+      <button id="b-audio" class="on" title="Ask the robot to stream mic audio">Mic stream on</button>
+      <select id="s-hz" title="Sensor frames per second"><option>5</option><option selected>10</option><option>20</option></select>
+    </div>
+  </header>
+
+  <section class="hear">
+    <div class="card">
+      <h2>What it hears <span id="h-src">no audio yet</span></h2>
+      <div>
+        <div class="meter"><div class="fill" id="m-fill"></div><div class="floor" id="m-floor"></div><div class="peak" id="m-peak"></div><div class="lbl" id="m-lbl">-- dBFS</div></div>
+      </div>
+      <div class="scale"><span>-90</span><span>-70</span><span>-50</span><span>-30</span><span>-10 dBFS</span></div>
+      <div class="row">
+        <span><i class="lamp" id="l-vad"></i>voice</span>
+        <span>floor <b id="v-floor">--</b></span>
+        <span>peak <b id="v-peak">--</b></span>
+        <span>wake word <b id="v-mww">--</b></span>
+        <span>silent mode <b id="v-silent">--</b></span>
+      </div>
+      <canvas id="spec" width="900" height="170"></canvas>
+      <canvas id="wave" width="900" height="46"></canvas>
+      <div class="hint">Spectrogram 0 to 8 kHz, about 14 s across. Speech shows as stacked harmonics under 4 kHz; fan or servo noise as flat horizontal lines.</div>
+    </div>
+    <div class="card">
+      <h2>Heard <span>live transcripts and conversation lines</span></h2>
+      <div class="partial idle" id="partial">Waiting for speech</div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </section>
+
+  <section class="grid" id="cards">
+    <div class="card" id="c-imu">
+      <h2>Motion <span>BMI270</span></h2>
+      <canvas id="tilt" width="400" height="200"></canvas>
+      <div class="bars" id="imu-a"></div>
+      <div class="bars" id="imu-g"></div>
+      <canvas class="spark" id="sp-acc" width="400" height="42"></canvas>
+      <div class="row" id="imu-extra"></div>
+    </div>
+    <div class="card" id="c-prox">
+      <h2>Proximity and light <span>LTR-553</span></h2>
+      <div class="big" id="prox-ps">--<small> ps</small></div>
+      <div class="bars" id="prox-bars"></div>
+      <canvas class="spark" id="sp-ps" width="400" height="42"></canvas>
+      <div class="row">ambient <b id="prox-als">--</b></div>
+    </div>
+    <div class="card" id="c-head">
+      <h2>Head touch <span>Si12T</span></h2>
+      <div class="row"><span><i class="lamp tl" id="l-head"></i>pressed</span><span>position <b id="head-pos">--</b></span><span>last <b id="head-last">--</b></span></div>
+      <div class="bars" id="head-bars"></div>
+    </div>
+    <div class="card" id="c-screen">
+      <h2>Screen touch <span>320 x 240</span></h2>
+      <canvas id="screen" width="320" height="240"></canvas>
+      <div class="row"><span><i class="lamp tl" id="l-screen"></i>touching</span><span>at <b id="screen-xy">--</b></span></div>
+    </div>
+    <div class="card" id="c-servo">
+      <h2>Head servos <span>actual vs target</span></h2>
+      <canvas id="servo" width="400" height="200"></canvas>
+      <dl class="kv" id="servo-kv"></dl>
+    </div>
+    <div class="card" id="c-power">
+      <h2>Power <span>AXP2101</span></h2>
+      <div class="big" id="pw-pct">--<small> %</small></div>
+      <dl class="kv" id="pw-kv"></dl>
+    </div>
+    <div class="card" id="c-sys">
+      <h2>System and network</h2>
+      <dl class="kv" id="sys-kv"></dl>
+    </div>
+    <div class="card">
+      <h2>Events <span id="ev-n">0</span></h2>
+      <div class="events" id="events"><div class="na">Tap the head, shake it, or say the wake word.</div></div>
+    </div>
+  </section>
+
+  <details class="card"><summary>Latest raw frame</summary><pre id="raw">{}</pre></details>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const fmt = (v, d = 1) => (v === null || v === undefined || Number.isNaN(v)) ? "--" : (typeof v === "number" ? v.toFixed(d) : String(v));
+const clock = (ts) => new Date((ts || Date.now() / 1000) * 1000).toLocaleTimeString([], { hour12: false });
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+// ------------------------------------------------------------------ connection
+let ws = null, latest = {}, frameTimes = [], audioBytes = [], lastFrameAt = 0, robotUp = false;
+function pill(id, cls, text) { const p = $(id); p.className = "pill " + cls; p.querySelector("b").textContent = text; }
+
+function connect() {
+  ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/sensors/ws");
+  ws.binaryType = "arraybuffer";
+  ws.onopen = () => { pill("p-brain", "ok", "connected"); sendCfg(); };
+  ws.onclose = () => { pill("p-brain", "bad", "reconnecting"); setTimeout(connect, 1500); };
+  ws.onmessage = (ev) => {
+    if (typeof ev.data !== "string") return onAudio(ev.data);
+    let m; try { m = JSON.parse(ev.data); } catch { return; }
+    if (m.t === "hello") {
+      robotState(m.status.robot, m.status.robot_info);
+      if (m.latest && m.latest.t) onSensors(m.latest);
+      (m.recent || []).forEach((o) => o.t === "event" ? onEvent(o, true) : o.t === "heard" ? onHeard(o) : null);
+    } else if (m.t === "sensors") onSensors(m);
+    else if (m.t === "event") onEvent(m);
+    else if (m.t === "heard") onHeard(m);
+    else if (m.t === "robot") robotState(m.connected, m);
+  };
+}
+function sendCfg() {
+  if (!ws || ws.readyState !== 1) return;
+  ws.send(JSON.stringify({ t: "audio", on: $("b-audio").classList.contains("on") }));
+  ws.send(JSON.stringify({ t: "hz", value: +$("s-hz").value }));
+}
+function robotState(up, info) {
+  robotUp = !!up;
+  if (up) pill("p-robot", "ok", (info && info.firmware ? "fw " + info.firmware : "connected"));
+  else pill("p-robot", "wait", "waiting for the robot's next poll");
+}
+$("b-audio").onclick = () => { const b = $("b-audio"); b.classList.toggle("on"); b.textContent = b.classList.contains("on") ? "Mic stream on" : "Mic stream off"; sendCfg(); };
+$("s-hz").onchange = sendCfg;
+
+setInterval(() => {
+  const now = performance.now();
+  frameTimes = frameTimes.filter((t) => now - t < 2000);
+  audioBytes = audioBytes.filter((a) => now - a[0] < 2000);
+  pill("p-rate", frameTimes.length ? "ok" : "", (frameTimes.length / 2).toFixed(1) + "/s");
+  const kb = audioBytes.reduce((s, a) => s + a[1], 0) / 2048;
+  pill("p-audio", kb > 0 ? "ok" : "", kb.toFixed(1) + " kB/s");
+  if (robotUp && lastFrameAt && now - lastFrameAt > 3000) pill("p-robot", "bad", "stalled " + ((now - lastFrameAt) / 1000).toFixed(0) + " s");
+}, 500);
+
+// ------------------------------------------------------------------- audio
+let actx = null, playing = false, playAt = 0;
+const SR = 16000;
+$("b-play").onclick = async () => {
+  if (!actx) {
+    try { actx = new AudioContext({ sampleRate: SR }); } catch { actx = new AudioContext(); }
+  }
+  playing = !playing;
+  if (playing) await actx.resume();
+  $("b-play").classList.toggle("on", playing);
+  $("b-play").innerHTML = playing ? "&#10073;&#10073; Mute" : "&#9654; Hear it";
+};
+let audioLevel = { db: -120, at: 0 }, srcLabel = "";
+function onAudio(buf) {
+  const src = new Uint8Array(buf, 0, 1)[0] === 1 ? "conversation (before the brain gain)" : "robot mic, idle";
+  if (src !== srcLabel) { srcLabel = src; $("h-src").textContent = src; }
+  const pcm = new Int16Array(buf.slice(1));
+  audioBytes.push([performance.now(), pcm.length * 2]);
+  const f = new Float32Array(pcm.length);
+  let sum = 0;
+  for (let i = 0; i < pcm.length; i++) { f[i] = pcm[i] / 32768; sum += f[i] * f[i]; }
+  audioLevel = { db: 20 * Math.log10(Math.max(Math.sqrt(sum / Math.max(1, f.length)), 1 / 32768)), at: performance.now() };
+  spectro(f); wave(f);
+  if (playing && actx) {
+    const b = actx.createBuffer(1, f.length, SR);
+    b.copyToChannel(f, 0);
+    const s = actx.createBufferSource();
+    s.buffer = b; s.connect(actx.destination);
+    const now = actx.currentTime;
+    if (playAt < now + 0.05 || playAt > now + 1.0) playAt = now + 0.25;  // jitter buffer, resync when far off
+    s.start(playAt); playAt += b.duration;
+  }
+}
+
+// FFT spectrogram
+const N = 512, HOP = 256, specCv = $("spec"), sctx = specCv.getContext("2d");
+const hann = Float32Array.from({ length: N }, (_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1)));
+let ring = new Float32Array(0);
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const a = i + k, b = a + len / 2;
+        const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        const ncr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = ncr;
+      }
+    }
+  }
+}
+function heat(v) { // 0..1 to a dark teal, amber, white ramp
+  const stops = [[7, 10, 12], [20, 70, 80], [69, 201, 184], [245, 184, 65], [255, 245, 220]];
+  const x = Math.max(0, Math.min(0.9999, v)) * (stops.length - 1), i = Math.floor(x), t = x - i;
+  const a = stops[i], b = stops[i + 1];
+  return [0, 1, 2].map((k) => Math.round(a[k] + (b[k] - a[k]) * t));
+}
+const col = sctx.createImageData(1, specCv.height);
+function spectro(f) {
+  const joined = new Float32Array(ring.length + f.length); joined.set(ring); joined.set(f, ring.length); ring = joined;
+  while (ring.length >= N) {
+    const re = new Float32Array(N), im = new Float32Array(N);
+    for (let i = 0; i < N; i++) re[i] = ring[i] * hann[i];
+    fft(re, im);
+    const H = specCv.height, W = specCv.width;
+    sctx.drawImage(specCv, 1, 0, W - 1, H, 0, 0, W - 1, H);
+    for (let y = 0; y < H; y++) {
+      const bin = Math.max(1, Math.floor((1 - y / H) * (N / 2 - 1)));
+      const mag = Math.hypot(re[bin], im[bin]) / (N / 4);
+      const db = 20 * Math.log10(mag + 1e-9);
+      const [r, g, b] = heat((db + 100) / 80);
+      col.data.set([r, g, b, 255], y * 4);
+    }
+    sctx.putImageData(col, W - 1, 0);
+    ring = ring.slice(HOP);
+  }
+}
+const waveCv = $("wave"), wctx = waveCv.getContext("2d");
+let waveBuf = [];
+function wave(f) {
+  for (let i = 0; i < f.length; i += 32) { let m = 0; for (let k = i; k < Math.min(i + 32, f.length); k++) m = Math.max(m, Math.abs(f[k])); waveBuf.push(m); }
+  const W = waveCv.width, H = waveCv.height;
+  if (waveBuf.length > W) waveBuf = waveBuf.slice(waveBuf.length - W);
+  wctx.clearRect(0, 0, W, H);
+  wctx.fillStyle = css("--teal");
+  const off = W - waveBuf.length;
+  for (let x = 0; x < waveBuf.length; x++) { const h = Math.max(1, Math.min(1, waveBuf[x] * 4) * H); wctx.fillRect(off + x, (H - h) / 2, 1, h); }
+}
+
+// --------------------------------------------------------------- mic meter
+const dbToPct = (db) => Math.max(0, Math.min(100, (db + 90) / 85 * 100));
+let peakHold = -120, peakAt = 0;
+function meter() {
+  const now = performance.now(), m = latest.mic || {};
+  const fresh = lastFrameAt && now - lastFrameAt < 1500 && typeof m.db === "number";
+  const db = fresh ? m.db : (now - audioLevel.at < 600 ? audioLevel.db : -120);
+  if (db > peakHold || now - peakAt > 1500) { peakHold = db; peakAt = now; }
+  $("m-fill").style.width = dbToPct(db) + "%";
+  $("m-peak").style.left = dbToPct(peakHold) + "%";
+  $("m-lbl").textContent = db > -119 ? db.toFixed(1) + " dBFS" : "-- dBFS";
+  if (typeof m.floor_db === "number") { $("m-floor").style.left = dbToPct(m.floor_db) + "%"; $("m-floor").hidden = false; } else $("m-floor").hidden = true;
+  requestAnimationFrame(meter);
+}
+requestAnimationFrame(meter);
+
+// ----------------------------------------------------------------- heard feed
+const partials = {};
+function onHeard(m) {
+  if (m.source === "stt" && !m.final) {
+    $("partial").className = "partial"; $("partial").textContent = m.text || "...";
+    return;
+  }
+  if (m.source === "stt" && m.final) {
+    $("partial").className = "partial idle"; $("partial").textContent = "Waiting for speech";
+    if (m.drop || (!m.text && !m.error)) return;
+  }
+  const chips = { stt: ["c-stt", "local"], realtime: ["c-realtime", "realtime"], assistant: ["c-assistant", "robot"], listen: ["c-listen", "listener"] };
+  const [cls, name] = chips[m.source] || ["c-event", m.source];
+  const meta = [];
+  if (m.src) meta.push(m.src === "session" ? "in conversation" : "idle mic");
+  if (m.dur_ms) meta.push((m.dur_ms / 1000).toFixed(1) + " s");
+  if (typeof m.db === "number") meta.push(m.db + " dBFS");
+  if (m.ms) meta.push(m.ms + " ms to transcribe");
+  if (m.verdict) meta.push("verdict " + m.verdict + (m.reason ? " (" + m.reason + ")" : ""));
+  if (typeof m.mww === "number" && m.source === "listen") meta.push("wake word " + m.mww.toFixed(2));
+  if (m.error) meta.push("error " + m.error);
+  const div = document.createElement("div");
+  div.className = "line";
+  div.innerHTML = `<span class="t">${clock(m.at)}</span><span class="chip ${cls}">${name}</span><span class="x">${esc(m.text || "(nothing)")}</span>` + (meta.length ? `<span class="m">${esc(meta.join(" · "))}</span>` : "");
+  const feed = $("feed");
+  feed.prepend(div);
+  while (feed.children.length > 80) feed.lastChild.remove();
+}
+
+// --------------------------------------------------------------------- events
+let evCount = 0;
+function onEvent(m, old) {
+  const box = $("events");
+  if (!evCount) box.innerHTML = "";
+  evCount++; $("ev-n").textContent = evCount;
+  const extra = Object.entries(m).filter(([k]) => !["t", "name", "at", "ms"].includes(k)).map(([k, v]) => k + " " + (typeof v === "number" ? +v.toFixed(3) : v)).join(", ");
+  const d = document.createElement("div");
+  d.innerHTML = `<span class="t">${clock(m.at)}</span><span class="chip c-event">${esc(m.name)}</span><span>${esc(extra)}</span>`;
+  box.prepend(d);
+  while (box.children.length > 120) box.lastChild.remove();
+  if (old) return;
+  const map = { tap: "c-head", double_tap: "c-head", press: "c-head", release: "c-head", swipe_forward: "c-head", swipe_backward: "c-head", pet: "c-head", shake: "c-imu", pickup: "c-imu", screen_tap: "c-screen" };
+  if (m.name && m.name.startsWith("swipe")) $("head-last").textContent = m.name.replace("_", " ");
+  else if (map[m.name] === "c-head") $("head-last").textContent = m.name.replace("_", " ");
+  const card = $(map[m.name] || "");
+  if (card) { card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash"); }
+}
+
+// -------------------------------------------------------------------- sensors
+const hist = { acc: [], ps: [] };
+function push(arr, v, n = 200) { arr.push(v); if (arr.length > n) arr.shift(); }
+function spark(id, arr, color) {
+  const c = $(id), x = c.getContext("2d"), W = c.width, H = c.height;
+  x.clearRect(0, 0, W, H);
+  const v = arr.filter((a) => typeof a === "number");
+  if (v.length < 2) return;
+  let lo = Math.min(...v), hi = Math.max(...v);
+  if (hi - lo < 1e-6) { hi += 1; lo -= 1; }
+  x.strokeStyle = color; x.lineWidth = 1.5; x.beginPath();
+  arr.forEach((a, i) => { if (typeof a !== "number") return; const px = i / (arr.length - 1) * W, py = H - 3 - (a - lo) / (hi - lo) * (H - 6); i ? x.lineTo(px, py) : x.moveTo(px, py); });
+  x.stroke();
+  x.fillStyle = css("--dim"); x.font = "10px " + css("--mono"); x.fillText(fmt(hi, 2), 2, 10); x.fillText(fmt(lo, 2), 2, H - 2);
+}
+function bars(id, items) {
+  // items: [name, value, min, max, unit, centered]
+  const el = $(id);
+  if (el.children.length !== items.length) el.innerHTML = items.map(() => `<div class="bar"><span class="n"></span><div class="track"><div class="mid"></div><div class="f"></div></div><span class="v"></span></div>`).join("");
+  items.forEach(([name, v, lo, hi, unit, centered], i) => {
+    const row = el.children[i];
+    row.querySelector(".n").textContent = name;
+    row.querySelector(".v").textContent = typeof v === "number" ? fmt(v, Math.abs(v) < 10 ? 2 : 0) + (unit || "") : "--";
+    const f = row.querySelector(".f"), mid = row.querySelector(".mid");
+    mid.hidden = !centered;
+    if (typeof v !== "number") { f.style.width = "0"; return; }
+    const p = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+    if (centered) { const z = (0 - lo) / (hi - lo); f.style.left = Math.min(p, z) * 100 + "%"; f.style.width = Math.abs(p - z) * 100 + "%"; }
+    else { f.style.left = "0"; f.style.width = p * 100 + "%"; }
+  });
+}
+function kv(id, pairs) {
+  $(id).innerHTML = pairs.filter(([, v]) => v !== undefined).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v === null ? "--" : v)}</dd>`).join("");
+}
+const autoMax = {};
+function scaleOf(key, v, floor) { autoMax[key] = Math.max(autoMax[key] || floor, Math.abs(v) || 0); return autoMax[key]; }
+
+function onSensors(s) {
+  latest = s; lastFrameAt = performance.now(); frameTimes.push(lastFrameAt);
+  if (s.state) $("p-state").querySelector("b").textContent = s.state;
+  const mic = s.mic || {};
+  $("l-vad").classList.toggle("on", !!mic.vad);
+  $("v-floor").textContent = fmt(mic.floor_db) + " dB";
+  $("v-peak").textContent = fmt(mic.peak_db) + " dB";
+  $("v-mww").textContent = fmt(mic.mww, 2);
+  $("v-silent").textContent = s.silent === undefined ? "--" : (s.silent ? "ON (not listening)" : "off");
+  if (mic.src === "off") $("h-src").textContent = "mic off (silent mode)";
+  else if (mic.src && !srcLabel) $("h-src").textContent = "mic " + mic.src;
+
+  // Motion
+  const imu = s.imu;
+  if (imu) {
+    bars("imu-a", [["ax", imu.ax, -2, 2, " g", true], ["ay", imu.ay, -2, 2, " g", true], ["az", imu.az, -2, 2, " g", true]]);
+    bars("imu-g", [["gx", imu.gx, -250, 250, "°/s", true], ["gy", imu.gy, -250, 250, "°/s", true], ["gz", imu.gz, -250, 250, "°/s", true]]);
+    const amag = Math.hypot(imu.ax || 0, imu.ay || 0, imu.az || 0);
+    push(hist.acc, amag); spark("sp-acc", hist.acc, css("--teal"));
+    const pitch = Math.atan2(-(imu.ax || 0), Math.hypot(imu.ay || 0, imu.az || 0)) * 180 / Math.PI;
+    const roll = Math.atan2(imu.ay || 0, imu.az || 1) * 180 / Math.PI;
+    drawTilt(pitch, roll);
+    const ex = [`|a| <b>${fmt(amag, 2)} g</b>`, `pitch <b>${fmt(pitch, 0)}°</b>`, `roll <b>${fmt(roll, 0)}°</b>`];
+    if (typeof imu.mx === "number") ex.push(`heading <b>${fmt((Math.atan2(imu.my, imu.mx) * 180 / Math.PI + 360) % 360, 0)}°</b>`);
+    if (imu.motion && imu.motion !== "none") ex.push(`motion <b>${esc(imu.motion)}</b>`);
+    $("imu-extra").innerHTML = ex.map((e) => `<span>${e}</span>`).join("");
+  } else $("imu-extra").innerHTML = '<span class="na">no IMU data in the stream</span>';
+
+  // Proximity
+  const p = s.prox;
+  if (p) {
+    $("prox-ps").innerHTML = fmt(p.ps, 0) + "<small> ps</small>";
+    bars("prox-bars", [["ps", p.ps, 0, scaleOf("ps", p.ps, 200), "", false], ["als", p.als, 0, scaleOf("als", p.als, 50), "", false]]);
+    $("prox-als").textContent = fmt(p.als, 1);
+    push(hist.ps, p.ps); spark("sp-ps", hist.ps, css("--amber"));
+  }
+
+  // Head touch
+  const h = s.head;
+  if (h) {
+    $("l-head").classList.toggle("on", !!h.pressed);
+    $("head-pos").textContent = fmt(h.pos, 0);
+    const raw = Array.isArray(h.raw) ? h.raw : [];
+    const mx = raw.length ? scaleOf("head", Math.max(...raw.map(Math.abs)), 3) : 1;  // Si12T levels 0 to 3
+    bars("head-bars", raw.map((v, i) => ["ch" + (i + 1), v, 0, mx, "", false]));
+  }
+
+  // Screen
+  drawScreen(s.screen);
+
+  // Servos
+  const sv = s.servo;
+  if (sv) {
+    drawServo(sv);
+    kv("servo-kv", [["yaw", fmt(sv.yaw) + "°"], ["yaw target", fmt(sv.yaw_target) + "°"], ["pitch", fmt(sv.pitch) + "°"], ["pitch target", fmt(sv.pitch_target) + "°"],
+      ...Object.entries(sv).filter(([k]) => !["yaw", "pitch", "yaw_target", "pitch_target"].includes(k)).map(([k, v]) => [k, typeof v === "number" ? fmt(v) : String(v)])]);
+  }
+
+  // Power
+  const pw = s.power;
+  if (pw) {
+    $("pw-pct").innerHTML = fmt(pw.bat_pct, 0) + "<small> %" + (pw.charging ? " charging" : "") + "</small>";
+    kv("pw-kv", [["battery", fmt(pw.bat_v, 2) + " V"], ["charging", pw.charging === undefined ? undefined : (pw.charging ? "yes" : "no")], ["USB", pw.usb === undefined ? undefined : (pw.usb ? "yes" : "no")], ["VBUS", pw.vbus_v === undefined ? undefined : fmt(pw.vbus_v, 2) + " V"],
+      ...Object.entries(pw).filter(([k]) => !["bat_v", "bat_pct", "charging", "usb", "vbus_v"].includes(k)).map(([k, v]) => [k, String(v)])]);
+  }
+
+  // System, network, speaker and any group this page does not know yet
+  const sys = s.sys || {}, net = s.net || {}, spk = s.speaker || {};
+  const pairs = [["firmware", sys.fw], ["uptime", sys.uptime_s !== undefined ? fmtDur(sys.uptime_s) : undefined], ["wifi", net.rssi !== undefined ? net.rssi + " dBm" : undefined],
+    ["free heap", sys.heap !== undefined ? (sys.heap / 1024).toFixed(0) + " kB" : undefined], ["free psram", sys.psram !== undefined ? (sys.psram / 1048576).toFixed(2) + " MB" : undefined],
+    ["chip temp", sys.chip_c !== undefined ? fmt(sys.chip_c) + " °C" : undefined], ["audio drops", sys.drops], ["speaker volume", spk.volume], ["speaker playing", spk.playing === undefined ? undefined : (spk.playing ? "yes" : "no")]];
+  const known = new Set(["t", "ms", "state", "mic", "imu", "prox", "head", "screen", "servo", "power", "sys", "net", "speaker", "silent", "at"]);
+  for (const [k, v] of Object.entries(s)) if (!known.has(k)) pairs.push([k, typeof v === "object" ? JSON.stringify(v) : String(v)]);
+  for (const [k, v] of Object.entries(sys)) if (!["fw", "uptime_s", "heap", "psram", "chip_c", "drops"].includes(k)) pairs.push([k, String(v)]);
+  for (const [k, v] of Object.entries(net)) if (k !== "rssi") pairs.push([k, String(v)]);
+  kv("sys-kv", pairs);
+
+  if ($("raw").closest("details").open) $("raw").textContent = JSON.stringify(s, null, 2);
+}
+function fmtDur(s) { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + " h " : "") + m + " min " + (s % 60) + " s"; }
+
+function drawTilt(pitch, roll) {
+  const c = $("tilt"), x = c.getContext("2d"), W = c.width, H = c.height;
+  x.clearRect(0, 0, W, H);
+  [[W / 4, pitch, "pitch"], [3 * W / 4, roll, "roll"]].forEach(([cx, a, label]) => {
+    const cy = H / 2 + 6, r = H * 0.36;
+    x.strokeStyle = css("--line"); x.lineWidth = 1; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.moveTo(cx - r, cy); x.lineTo(cx + r, cy); x.stroke();
+    const t = (a || 0) * Math.PI / 180;
+    x.strokeStyle = css("--teal"); x.lineWidth = 4; x.lineCap = "round"; x.beginPath();
+    x.moveTo(cx - r * Math.cos(t), cy - r * Math.sin(t)); x.lineTo(cx + r * Math.cos(t), cy + r * Math.sin(t)); x.stroke();
+    x.fillStyle = css("--dim"); x.font = "11px " + css("--mono"); x.textAlign = "center";
+    x.fillText(label + " " + fmt(a, 0) + "°", cx, 14);
+  });
+}
+let trail = [];
+function drawScreen(sc) {
+  const c = $("screen"), x = c.getContext("2d");
+  x.fillStyle = "#070a0c"; x.fillRect(0, 0, 320, 240);
+  x.strokeStyle = css("--line"); x.strokeRect(0.5, 0.5, 319, 239);
+  if (!sc) { x.fillStyle = css("--dim"); x.font = "12px " + css("--mono"); x.fillText("no screen touch data", 90, 124); return; }
+  $("l-screen").classList.toggle("on", !!sc.pressed);
+  if (sc.pressed && typeof sc.x === "number") { trail.push([sc.x, sc.y]); if (trail.length > 30) trail.shift(); $("screen-xy").textContent = sc.x + ", " + sc.y; }
+  else if (trail.length) trail.shift();
+  trail.forEach(([px, py], i) => { x.fillStyle = `rgba(69,201,184,${(i + 1) / trail.length * 0.6})`; x.beginPath(); x.arc(px, py, 4, 0, 7); x.fill(); });
+  if (sc.pressed && typeof sc.x === "number") { x.fillStyle = css("--amber"); x.beginPath(); x.arc(sc.x, sc.y, 11, 0, 7); x.fill(); }
+}
+function drawServo(sv) {
+  const c = $("servo"), x = c.getContext("2d"), W = c.width, H = c.height;
+  x.clearRect(0, 0, W, H);
+  const dial = (cx, label, a, tgt, start, end, rot) => {
+    const cy = H * 0.62, r = H * 0.42;
+    x.strokeStyle = css("--line"); x.lineWidth = 8; x.beginPath(); x.arc(cx, cy, r, start, end); x.stroke();
+    const needle = (v, color, w, len) => { if (typeof v !== "number") return; const t = rot(v); x.strokeStyle = color; x.lineWidth = w; x.lineCap = "round"; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(t) * r * len, cy + Math.sin(t) * r * len); x.stroke(); };
+    needle(tgt, css("--violet"), 2, 1.05);
+    needle(a, css("--amber"), 5, 0.9);
+    x.fillStyle = css("--dim"); x.font = "11px " + css("--mono"); x.textAlign = "center";
+    x.fillText(label + " " + fmt(a, 0) + "°", cx, H - 4);
+  };
+  // yaw seen from above: 0 points up, positive turns right; pitch seen from the side: 0 is level, positive looks up
+  dial(W / 4, "yaw", sv.yaw, sv.yaw_target, Math.PI, 2 * Math.PI, (v) => -Math.PI / 2 + v * Math.PI / 180);
+  dial(3 * W / 4, "pitch", sv.pitch, sv.pitch_target, Math.PI, 2 * Math.PI, (v) => -v * Math.PI / 180);
+  x.fillStyle = css("--dim"); x.textAlign = "left"; x.font = "10px " + css("--mono");
+  x.fillText("thick: actual   thin: target", 6, 12);
+}
+
+$("raw").closest("details").addEventListener("toggle", () => { $("raw").textContent = JSON.stringify(latest, null, 2); });
+connect();
+</script>
+</body>
+</html>

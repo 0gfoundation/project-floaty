@@ -1,0 +1,75 @@
+{
+  "label": "demo data",
+  "about": "Made-up sample memory for a fictional user, Sam Sample, so the Memory tab has something to show. None of it is real.",
+  "profile": "Sam Sample (fictional demo user). Lives in Exampleville with a cat called Pixel. Works as a pastry chef, likes jazz and houseplants.",
+  "facts": [
+    {"id": 1, "text": "Sam's cat is called Pixel and is four years old", "kind": "person", "entity": "Pixel", "created": "2026-09-02T09:14+00:00", "expires": null, "source": "voice"},
+    {"id": 2, "text": "Sam prefers green tea after 4 pm and no coffee in the evening", "kind": "preference", "entity": "Sam", "created": "2026-09-03T17:40+00:00", "expires": null, "source": "voice"},
+    {"id": 3, "text": "Sam's sister Riley Sample lives in Sampletown", "kind": "person", "entity": "Riley Sample", "created": "2026-09-05T20:02+00:00", "expires": null, "source": "voice"},
+    {"id": 4, "text": "The fern on the desk needs water every Tuesday and Friday", "kind": "fact", "entity": "fern", "created": "2026-09-10T08:30+00:00", "expires": null, "source": "voice"},
+    {"id": 5, "text": "Sam likes the robot to say good morning with the weather", "kind": "preference", "entity": "Sam", "created": "2026-09-12T07:05+00:00", "expires": null, "source": "voice"},
+    {"id": 6, "text": "Sam is baking a lemon tart for the bakery fair", "kind": "plan", "entity": "bakery fair", "created": "2026-10-14T19:22+00:00", "expires": "2030-06-30T00:00+00:00", "source": "voice"},
+    {"id": 7, "text": "Remind Sam to call the plumber about the kitchen tap", "kind": "reminder", "entity": "plumber", "created": "2026-10-18T11:47+00:00", "expires": "2030-06-30T00:00+00:00", "source": "voice"},
+    {"id": 8, "text": "Sam's favourite song to wake up to is a slow jazz piano piece", "kind": "preference", "entity": "Sam", "created": "2026-10-01T07:12+00:00", "expires": null, "source": "admin"},
+    {"id": 9, "text": "Pixel has a vet check-up booked", "kind": "event", "entity": "Pixel", "created": "2026-01-03T10:00+00:00", "expires": "2026-01-10T00:00+00:00", "source": "voice"},
+    {"id": 10, "text": "Sam is learning to say good morning in five languages", "kind": "fact", "entity": "Sam", "created": "2026-10-19T08:01+00:00", "expires": null, "source": "voice"}
+  ],
+  "documents": [
+    {"id": 1, "title": "Houseplant care notes (demo)", "source": "admin", "url": null, "created": "2026-09-10T08:40+00:00",
+     "text": "Fern: likes indirect light and steady moisture. Water every Tuesday and Friday, a little more in a hot week. Mist the leaves when the air is dry.\n\nSnake plant: almost no care. Water once every two to three weeks, only when the soil is fully dry. Too much water rots the roots.\n\nBasil on the window sill: water when the top of the soil feels dry. Pinch off flowers so the leaves stay sweet."},
+    {"id": 2, "title": "Lemon tart recipe (demo)", "source": "admin", "url": null, "created": "2026-10-14T19:30+00:00",
+     "text": "Pastry: 200 g flour, 100 g cold butter, 50 g sugar, one egg yolk, a spoon of cold water. Rub the butter into the flour, add the rest, rest the dough for 30 minutes, then blind bake at 180 C for 15 minutes.\n\nFilling: three lemons (zest and juice), 150 g sugar, three eggs, 100 ml cream. Whisk, pour into the warm shell and bake at 150 C for about 25 minutes, until it barely wobbles in the middle.\n\nServe cold with a dusting of icing sugar."},
+    {"id": 3, "title": "Good morning in five languages (demo)", "source": "voice", "url": null, "created": "2026-10-19T08:05+00:00",
+     "text": "English: good morning. Spanish: buenos dias. French: bonjour. Japanese: ohayou gozaimasu. Tamil: kaalai vanakkam.\n\nPractice plan: one language a day, the robot says it first and Sam repeats it back."}
+  ],
+  "episodes": [
+    {"id": "demo-2026-10-19-0801", "started": "2026-10-19T08:01+00:00", "ended": "2026-10-19T08:06+00:00", "status": "summarized",
+     "summary": "Sam asked how to say good morning in other languages and decided to learn five, one a day.",
+     "open_loops": ["Practice the Japanese greeting tomorrow morning"],
+     "new_facts": ["Sam is learning to say good morning in five languages"],
+     "model": "demo-model",
+     "turns": [
+       {"ts": "2026-10-19T08:01+00:00", "role": "user", "text": "Good morning! How do you say good morning in Japanese?"},
+       {"ts": "2026-10-19T08:01+00:00", "role": "assistant", "text": "Ohayou gozaimasu. Want to learn a few more?"},
+       {"ts": "2026-10-19T08:02+00:00", "role": "user", "text": "Yes, let's do five languages, one a day."},
+       {"ts": "2026-10-19T08:02+00:00", "role": "assistant", "text": "Deal. I saved the list as a note. Tomorrow we start with Japanese."}
+     ]},
+    {"id": "demo-2026-10-18-1145", "started": "2026-10-18T11:45+00:00", "ended": "2026-10-18T11:48+00:00", "status": "summarized",
+     "summary": "The kitchen tap is dripping; Sam asked for a reminder to call the plumber.",
+     "open_loops": ["Call the plumber about the kitchen tap"],
+     "new_facts": ["Remind Sam to call the plumber about the kitchen tap"],
+     "model": "demo-model",
+     "turns": [
+       {"ts": "2026-10-18T11:45+00:00", "role": "user", "text": "The kitchen tap is dripping again. Remind me to call the plumber."},
+       {"ts": "2026-10-18T11:46+00:00", "role": "assistant", "text": "Got it, I'll remind you this afternoon."}
+     ]},
+    {"id": "demo-2026-10-14-1920", "started": "2026-10-14T19:20+00:00", "ended": "2026-10-14T19:31+00:00", "status": "summarized",
+     "summary": "Sam planned a lemon tart for the bakery fair and saved the recipe; asked about baking time.",
+     "open_loops": ["Buy three lemons and cream before the fair"],
+     "new_facts": ["Sam is baking a lemon tart for the bakery fair"],
+     "model": "demo-model",
+     "turns": [
+       {"ts": "2026-10-14T19:20+00:00", "role": "user", "text": "I'm making a lemon tart for the bakery fair. Can you keep the recipe?"},
+       {"ts": "2026-10-14T19:21+00:00", "role": "assistant", "text": "Sure, read it to me or paste it in the dashboard and I'll keep it."},
+       {"ts": "2026-10-14T19:29+00:00", "role": "user", "text": "How long does the filling bake?"},
+       {"ts": "2026-10-14T19:29+00:00", "role": "assistant", "text": "About 25 minutes at 150 C, until the middle barely wobbles."}
+     ]},
+    {"id": "demo-2026-09-10-0828", "started": "2026-09-10T08:28+00:00", "ended": "2026-09-10T08:33+00:00", "status": "summarized",
+     "summary": "Sam asked how often to water the fern and the snake plant; the robot looked it up in the plant notes.",
+     "open_loops": [],
+     "new_facts": ["The fern on the desk needs water every Tuesday and Friday"],
+     "model": "demo-model",
+     "turns": [
+       {"ts": "2026-09-10T08:28+00:00", "role": "user", "text": "How often should I water the fern?"},
+       {"ts": "2026-09-10T08:28+00:00", "role": "assistant", "text": "Every Tuesday and Friday, a little more in a hot week."},
+       {"ts": "2026-09-10T08:30+00:00", "role": "user", "text": "And the snake plant?"},
+       {"ts": "2026-09-10T08:30+00:00", "role": "assistant", "text": "Only every two to three weeks, when the soil is completely dry."}
+     ]},
+    {"id": "demo-2026-10-21-0710", "started": "2026-10-21T07:10+00:00", "ended": null, "status": "open",
+     "summary": null, "open_loops": [], "new_facts": [], "model": null,
+     "turns": [
+       {"ts": "2026-10-21T07:10+00:00", "role": "user", "text": "Morning! What's the weather like?"},
+       {"ts": "2026-10-21T07:10+00:00", "role": "assistant", "text": "Good morning, Sam. Mild and sunny in Exampleville, a good day to water the fern."}
+     ]}
+  ]
+}
