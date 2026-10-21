@@ -21,7 +21,7 @@ REPO = "https://github.com/0gfoundation/project-floaty"
 
 HERO = f"""
   <div class="hero">
-    <img src="floaty.png" alt="Floaty, a little robot with heart eyes, floating" width="220">
+    <img src="floaty.png" alt="Floaty, a happy little robot, floating" width="220">
     <div>
       <h2>Floaty's faces</h2>
       <p>Floaty is a palm-sized AI agent with a face, built in public by the 0G DevRel team. Its brain thinks on
